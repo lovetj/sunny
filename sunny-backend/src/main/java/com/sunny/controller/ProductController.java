@@ -2,6 +2,7 @@ package com.sunny.controller;
 
 import com.sunny.common.PageResult;
 import com.sunny.common.Result;
+import com.sunny.dto.BatchStatusDTO;
 import com.sunny.dto.PageDTO;
 import com.sunny.dto.ProductDTO;
 import com.sunny.entity.Product;
@@ -54,6 +55,30 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         productService.deleteProduct(id);
+        return Result.success();
+    }
+
+    @DeleteMapping("/batch")
+    public Result<Void> batchDelete(@RequestBody List<Long> ids) {
+        productService.deleteBatch(ids);
+        return Result.success();
+    }
+
+    @PostMapping("/batch-delete")
+    public Result<Void> batchDeletePost(@RequestBody List<Long> ids) {
+        productService.deleteBatch(ids);
+        return Result.success();
+    }
+
+    @PutMapping("/{id}/status/{status}")
+    public Result<Void> updateStatus(@PathVariable Long id, @PathVariable Integer status) {
+        productService.updateStatus(id, status);
+        return Result.success();
+    }
+
+    @PostMapping("/batch-status")
+    public Result<Void> batchUpdateStatus(@Valid @RequestBody BatchStatusDTO dto) {
+        productService.updateStatusBatch(dto.getIds(), dto.getStatus());
         return Result.success();
     }
 }

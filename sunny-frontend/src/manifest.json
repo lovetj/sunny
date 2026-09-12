@@ -5,6 +5,7 @@
   "versionName": "1.0.0",
   "versionCode": "100",
   "transformPx": false,
+  "vueVersion": "3",
   "app-plus": {
     "usingComponents": true,
     "nvueStyleCompiler": "uni-app",
@@ -62,10 +63,14 @@
   },
   "h5": {
     "devServer": {
-      "port": 8081,
+      "port": 5173,
       "proxy": {
         "/api": {
           "target": "http://localhost:8080",
+          "changeOrigin": true
+        },
+        "/sunny_file": {
+          "target": "http://localhost:8081",
           "changeOrigin": true
         }
       }

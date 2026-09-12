@@ -108,7 +108,7 @@ export default {
       })
     },
     goShopping() {
-      uni.switchTab({ url: '/pages/index/index' })
+      uni.switchTab({ url: '/pages/index' })
     },
     submitOrder() {
       const selectedItems = this.cartList.filter(item => item.selected)
@@ -117,7 +117,7 @@ export default {
         return
       }
       uni.setStorageSync('orderItems', selectedItems)
-      uni.navigateTo({ url: '/pages/user/order' })
+      uni.navigateTo({ url: '/pages/order' })
     }
   }
 }

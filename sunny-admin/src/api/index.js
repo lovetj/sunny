@@ -13,6 +13,74 @@ export default {
     return request.get('/category/list')
   },
 
+  getCategoryPage(params) {
+    return request.get('/category/page', params)
+  },
+
+  getCategoryDetail(id) {
+    return request.get(`/category/${id}`)
+  },
+
+  addCategory(data) {
+    return request.post('/category', data)
+  },
+
+  updateCategory(data) {
+    return request.put('/category', data)
+  },
+
+  deleteCategory(id) {
+    return request.delete(`/category/${id}`)
+  },
+
+  batchDeleteCategory(ids) {
+    return request.post('/category/batch-delete', ids)
+  },
+
+  updateCategoryStatus(id, status) {
+    return request.put(`/category/${id}/status/${status}`)
+  },
+
+  batchUpdateCategoryStatus(ids, status) {
+    return request.post('/category/batch-status', { ids, status })
+  },
+
+  getBannerList() {
+    return request.get('/banner/list')
+  },
+
+  getBannerPage(params) {
+    return request.get('/banner/page', params)
+  },
+
+  getBannerDetail(id) {
+    return request.get(`/banner/${id}`)
+  },
+
+  addBanner(data) {
+    return request.post('/banner', data)
+  },
+
+  updateBanner(data) {
+    return request.put('/banner', data)
+  },
+
+  deleteBanner(id) {
+    return request.delete(`/banner/${id}`)
+  },
+
+  batchDeleteBanner(ids) {
+    return request.post('/banner/batch-delete', ids)
+  },
+
+  updateBannerStatus(id, status) {
+    return request.put(`/banner/${id}/status/${status}`)
+  },
+
+  batchUpdateBannerStatus(ids, status) {
+    return request.post('/banner/batch-status', { ids, status })
+  },
+
   getProductPage(params) {
     return request.get('/product/page', params)
   },
@@ -33,28 +101,56 @@ export default {
     return request.delete(`/product/${id}`)
   },
 
-  getPoetryPage(params) {
-    return request.get('/poetry/page', params)
+  batchDeleteProduct(ids) {
+    return request.post('/product/batch-delete', ids)
   },
 
-  getPoetryDetail(id) {
-    return request.get(`/poetry/${id}`)
+  updateProductStatus(id, status) {
+    return request.put(`/product/${id}/status/${status}`)
   },
 
-  addPoetry(data) {
-    return request.post('/poetry', data)
-  },
-
-  updatePoetry(data) {
-    return request.put('/poetry', data)
-  },
-
-  deletePoetry(id) {
-    return request.delete(`/poetry/${id}`)
+  batchUpdateProductStatus(ids, status) {
+    return request.post('/product/batch-status', { ids, status })
   },
 
   getOrderPage(params) {
     return request.get('/order/list', params)
+  },
+
+  getUserList() {
+    return request.get('/user/list')
+  },
+
+  getUserPage(params) {
+    return request.get('/user/page', params)
+  },
+
+  getUserDetail(id) {
+    return request.get(`/user/${id}`)
+  },
+
+  addUser(data) {
+    return request.post('/user', data)
+  },
+
+  updateUser(data) {
+    return request.put('/user', data)
+  },
+
+  deleteUser(id) {
+    return request.delete(`/user/${id}`)
+  },
+
+  batchDeleteUser(ids) {
+    return request.post('/user/batch-delete', ids)
+  },
+
+  updateUserStatus(id, status) {
+    return request.put(`/user/${id}/status/${status}`)
+  },
+
+  batchUpdateUserStatus(ids, status) {
+    return request.post('/user/batch-status', { ids, status })
   },
 
   getConfig(key) {
@@ -63,5 +159,13 @@ export default {
 
   setConfig(key, value) {
     return request.post('/config', null, { params: { key, value } })
+  },
+
+  getFileConfig() {
+    return request.get('/file/config')
+  },
+
+  uploadFile(filePath, module = 'common', fileObj = null) {
+    return request.uploadFile(filePath, module, fileObj)
   }
 }

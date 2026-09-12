@@ -16,11 +16,6 @@
         <text class="menu-text">收货地址</text>
         <text class="menu-arrow">›</text>
       </view>
-      <view class="menu-item" @click="goToPoetry">
-        <text class="menu-icon">📝</text>
-        <text class="menu-text">诗词天地</text>
-        <text class="menu-arrow">›</text>
-      </view>
       <view class="menu-item" @click="goToLogistics">
         <text class="menu-icon">🚚</text>
         <text class="menu-text">物流信息</text>
@@ -56,7 +51,7 @@
 </template>
 
 <script>
-import api from '../../api/index'
+import api from '../api/index'
 
 export default {
   data() {
@@ -87,16 +82,13 @@ export default {
       }
     },
     goToOrder() {
-      uni.navigateTo({ url: '/pages/user/order' })
+      uni.navigateTo({ url: '/pages/order' })
     },
     goToAddress() {
       uni.showToast({ title: '功能开发中', icon: 'none' })
     },
-    goToPoetry() {
-      uni.navigateTo({ url: '/pages/poetry/list' })
-    },
     goToLogistics() {
-      uni.navigateTo({ url: '/pages/logistics/list' })
+      uni.navigateTo({ url: '/pages/logistics' })
     },
     copyWechat() {
       uni.setClipboardData({

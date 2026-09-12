@@ -13,6 +13,8 @@ export default {
 </script>
 
 <style>
+/* touch-action 全局策略已在 index.html 中统一管理，避免此处重复声明干扰 */
+
 page {
   background-color: #f8f8f8;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

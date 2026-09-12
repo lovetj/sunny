@@ -2,5 +2,19 @@ import { defineConfig } from 'vite'
 import uni from '@dcloudio/vite-plugin-uni'
 
 export default defineConfig({
-  plugins: [uni()]
+  plugins: [uni()],
+  server: {
+    port: 5173,
+    host: '0.0.0.0',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/sunny_file': {
+        target: 'http://localhost:8081',
+        changeOrigin: true
+      }
+    }
+  }
 })

@@ -5,6 +5,10 @@ export default {
     return request.get('/banner/list')
   },
 
+  getFileConfig() {
+    return request.get('/file/config')
+  },
+
   getCategoryList() {
     return request.get('/category/list')
   },
@@ -23,14 +27,6 @@ export default {
 
   getProductPage(params) {
     return request.get('/product/page', params)
-  },
-
-  getPoetryList() {
-    return request.get('/poetry/list')
-  },
-
-  getPoetryDetail(id) {
-    return request.get(`/poetry/${id}`)
   },
 
   getLogisticsList() {

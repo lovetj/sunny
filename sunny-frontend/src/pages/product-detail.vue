@@ -1,19 +1,5 @@
 <template>
   <view class="product-detail-page" v-if="product">
-    <view class="header">
-      <view class="header-content">
-        <view class="back-btn" @click="goBack">
-          <text>‹</text>
-        </view>
-        <view class="header-title">
-          <text>商品详情</text>
-        </view>
-        <view class="share-btn" @click="shareProduct">
-          <text>📤</text>
-        </view>
-      </view>
-    </view>
-
     <swiper class="product-swiper" indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff" circular>
       <swiper-item v-if="product.image">
         <image :src="product.image" mode="aspectFill" @click="previewImage(product.image)"></image>
@@ -145,7 +131,7 @@
 </template>
 
 <script>
-import api from '../../api/index'
+import api from '../api/index'
 
 export default {
   data() {
@@ -205,10 +191,10 @@ export default {
       uni.navigateBack()
     },
     goHome() {
-      uni.switchTab({ url: '/pages/index/index' })
+      uni.switchTab({ url: '/pages/index' })
     },
     goCart() {
-      uni.switchTab({ url: '/pages/cart/cart' })
+      uni.switchTab({ url: '/pages/cart' })
     },
     shareProduct() {
       uni.showToast({ title: '分享功能开发中', icon: 'none' })
@@ -248,12 +234,12 @@ export default {
       if (this.actionType === 'cart') {
         uni.showToast({ title: '已加入购物车', icon: 'success' })
       } else {
-        uni.switchTab({ url: '/pages/cart/cart' })
+        uni.switchTab({ url: '/pages/cart' })
       }
     },
     goToDetail(id) {
       if (id !== this.product.id) {
-        uni.redirectTo({ url: `/pages/product/detail?id=${id}` })
+        uni.redirectTo({ url: `/pages/product-detail?id=${id}` })
       }
     }
   }
@@ -270,42 +256,6 @@ page {
 .product-detail-page {
   min-height: 100vh;
   padding-bottom: 120rpx;
-}
-
-.header {
-  background: #fff;
-  padding: 20rpx 24rpx;
-  padding-top: calc(20rpx + var(--status-bar-height, 0));
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.back-btn, .share-btn {
-  width: 60rpx;
-  height: 60rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-}
-
-.header-title {
-  flex: 1;
-  text-align: center;
-}
-
-.header-title text {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
 }
 
 .product-swiper {

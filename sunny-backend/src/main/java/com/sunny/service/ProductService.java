@@ -21,4 +21,10 @@ public interface ProductService extends IService<Product> {
     void updateProduct(ProductDTO dto);
 
     void deleteProduct(Long id);
+
+    void deleteBatch(List<Long> ids);
+
+    void updateStatus(Long id, Integer status);
+
+    void updateStatusBatch(List<Long> ids, Integer status);
 }

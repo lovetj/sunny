@@ -1,69 +1,65 @@
 {
   "pages": [
     {
-      "path": "pages/index/index",
+      "path": "pages/index",
       "style": {
-        "navigationBarTitleText": "Sunny农产品"
+        "navigationBarTitleText": "Sunny农产品",
+        "disableScroll": true
       }
     },
     {
-      "path": "pages/category/category",
+      "path": "pages/category",
       "style": {
-        "navigationBarTitleText": "分类"
+        "navigationBarTitleText": "分类",
+        "disableScroll": true
       }
     },
     {
-      "path": "pages/product/list",
+      "path": "pages/product-list",
       "style": {
         "navigationBarTitleText": "商品列表"
       }
     },
     {
-      "path": "pages/product/detail",
+      "path": "pages/product-detail",
       "style": {
         "navigationBarTitleText": "商品详情"
       }
     },
     {
-      "path": "pages/poetry/list",
-      "style": {
-        "navigationBarTitleText": "诗词天地"
-      }
-    },
-    {
-      "path": "pages/poetry/detail",
-      "style": {
-        "navigationBarTitleText": "诗词详情"
-      }
-    },
-    {
-      "path": "pages/logistics/list",
+      "path": "pages/logistics",
       "style": {
         "navigationBarTitleText": "物流信息"
       }
     },
     {
-      "path": "pages/cart/cart",
+      "path": "pages/cart",
       "style": {
         "navigationBarTitleText": "购物车"
       }
     },
     {
-      "path": "pages/user/user",
+      "path": "pages/user",
       "style": {
         "navigationBarTitleText": "个人中心"
       }
     },
     {
-      "path": "pages/user/order",
+      "path": "pages/order",
       "style": {
         "navigationBarTitleText": "我的订单"
       }
     },
     {
-      "path": "pages/contact/contact",
+      "path": "pages/contact",
       "style": {
         "navigationBarTitleText": "联系我们"
+      }
+    },
+    {
+      "path": "pages/webview",
+      "style": {
+        "navigationBarTitleText": "网页详情"
       }
     }
   ],
@@ -80,27 +76,27 @@
     "backgroundColor": "#ffffff",
     "list": [
       {
-        "pagePath": "pages/index/index",
-        "iconPath": "static/tabbar/home.png",
-        "selectedIconPath": "static/tabbar/home-active.png",
+        "pagePath": "pages/index",
+        "iconPath": "src/static/tabbar/home.png",
+        "selectedIconPath": "src/static/tabbar/home-active.png",
         "text": "首页"
       },
       {
-        "pagePath": "pages/category/category",
-        "iconPath": "static/tabbar/category.png",
-        "selectedIconPath": "static/tabbar/category-active.png",
+        "pagePath": "pages/category",
+        "iconPath": "src/static/tabbar/category.png",
+        "selectedIconPath": "src/static/tabbar/category-active.png",
         "text": "分类"
       },
       {
-        "pagePath": "pages/cart/cart",
-        "iconPath": "static/tabbar/cart.png",
-        "selectedIconPath": "static/tabbar/cart-active.png",
+        "pagePath": "pages/cart",
+        "iconPath": "src/static/tabbar/cart.png",
+        "selectedIconPath": "src/static/tabbar/cart-active.png",
         "text": "购物车"
       },
       {
-        "pagePath": "pages/user/user",
-        "iconPath": "static/tabbar/user.png",
-        "selectedIconPath": "static/tabbar/user-active.png",
+        "pagePath": "pages/user",
+        "iconPath": "src/static/tabbar/user.png",
+        "selectedIconPath": "src/static/tabbar/user-active.png",
         "text": "我的"
       }
     ]

@@ -111,7 +111,6 @@ sunny-backend/
 │   ├── controller/              # 控制器层
 │   │   ├── CategoryController.java
 │   │   ├── ProductController.java
-│   │   ├── PoetryController.java
 │   │   ├── OrderController.java
 │   │   ├── BannerController.java
 │   │   ├── LogisticsController.java
@@ -143,9 +142,6 @@ sunny-frontend/
 │   ├── product/                 # 商品页
 │   │   ├── list.vue
 │   │   └── detail.vue
-│   ├── poetry/                  # 诗词页
-│   │   ├── list.vue
-│   │   └── detail.vue
 │   ├── logistics/               # 物流页
 │   ├── cart/                    # 购物车
 │   ├── user/                    # 用户中心
@@ -173,9 +169,6 @@ sunny-admin/
 │   │   ├── list.vue
 │   │   └── edit.vue
 │   ├── category/                # 分类管理
-│   ├── poetry/                  # 诗词管理
-│   │   ├── list.vue
-│   │   └── edit.vue
 │   ├── order/                   # 订单管理
 │   └── config/                  # 系统配置
 ├── api/                         # 接口封装
@@ -251,18 +244,7 @@ sunny-admin/
   - categoryId: 分类ID
   - status: 状态
 
-### 4.4 诗词接口
-
-#### 获取诗词列表
-- **URL**: `/api/poetry/list`
-- **Method**: `GET`
-- **响应**: 诗词数组
-
-#### 获取诗词详情
-- **URL**: `/api/poetry/{id}`
-- **Method**: `GET`
-
-### 4.5 订单接口
+### 4.4 订单接口
 
 #### 创建订单
 - **URL**: `/api/order/create`
@@ -288,7 +270,7 @@ sunny-admin/
 - **Method**: `GET`
 - **参数**: pageNum, pageSize
 
-### 4.6 其他接口
+### 4.5 其他接口
 
 #### 轮播图
 - **URL**: `/api/banner/list`

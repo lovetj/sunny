@@ -14,13 +14,17 @@
         <view class="menu-icon" style="background: #52c41a;">类</view>
         <text class="menu-text">分类管理</text>
       </view>
-      <view class="menu-item" @click="goTo('/pages/poetry/list')">
-        <view class="menu-icon" style="background: #722ed1;">诗</view>
-        <text class="menu-text">诗词管理</text>
+      <view class="menu-item" @click="goTo('/pages/banner/list')">
+        <view class="menu-icon" style="background: #722ed1;">播</view>
+        <text class="menu-text">轮播图管理</text>
       </view>
       <view class="menu-item" @click="goTo('/pages/order/list')">
         <view class="menu-icon" style="background: #fa8c16;">单</view>
         <text class="menu-text">订单管理</text>
+      </view>
+      <view class="menu-item" @click="goTo('/pages/user/list')">
+        <view class="menu-icon" style="background: #eb2f96;">用</view>
+        <text class="menu-text">用户管理</text>
       </view>
       <view class="menu-item" @click="goTo('/pages/config/config')">
         <view class="menu-icon" style="background: #13c2c2;">置</view>
@@ -36,12 +40,20 @@
           <text class="stats-label">商品数量</text>
         </view>
         <view class="stats-item">
-          <text class="stats-value">{{ stats.poetryCount }}</text>
-          <text class="stats-label">诗词数量</text>
+          <text class="stats-value">{{ stats.categoryCount }}</text>
+          <text class="stats-label">分类数量</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-value">{{ stats.bannerCount }}</text>
+          <text class="stats-label">轮播图数量</text>
         </view>
         <view class="stats-item">
           <text class="stats-value">{{ stats.orderCount }}</text>
           <text class="stats-label">订单数量</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-value">{{ stats.userCount }}</text>
+          <text class="stats-label">用户数量</text>
         </view>
       </view>
     </view>
@@ -57,26 +69,34 @@ export default {
       adminInfo: {},
       stats: {
         productCount: 0,
-        poetryCount: 0,
-        orderCount: 0
+        categoryCount: 0,
+        bannerCount: 0,
+        orderCount: 0,
+        userCount: 0
       }
     }
   },
   onLoad() {
     this.adminInfo = uni.getStorageSync('admin_info') || {}
+  },
+  onShow() {
     this.loadStats()
   },
   methods: {
     async loadStats() {
       try {
-        const [productData, poetryData, orderData] = await Promise.all([
+        const [productData, categoryData, bannerData, orderData, userData] = await Promise.all([
           api.getProductPage({ pageNum: 1, pageSize: 1 }),
-          api.getPoetryPage({ pageNum: 1, pageSize: 1 }),
-          api.getOrderPage({ pageNum: 1, pageSize: 1 })
+          api.getCategoryPage({ pageNum: 1, pageSize: 1 }),
+          api.getBannerPage({ pageNum: 1, pageSize: 1 }),
+          api.getOrderPage({ pageNum: 1, pageSize: 1 }),
+          api.getUserPage({ pageNum: 1, pageSize: 1 })
         ])
         this.stats.productCount = productData?.total || 0
-        this.stats.poetryCount = poetryData?.total || 0
+        this.stats.categoryCount = categoryData?.total || 0
+        this.stats.bannerCount = bannerData?.total || 0
         this.stats.orderCount = orderData?.total || 0
+        this.stats.userCount = userData?.total || 0
       } catch (e) {
         console.error(e)
       }
@@ -199,5 +219,6 @@ export default {
 .stats-label {
   font-size: 24rpx;
   color: #999;
+  white-space: nowrap;
 }
 </style>

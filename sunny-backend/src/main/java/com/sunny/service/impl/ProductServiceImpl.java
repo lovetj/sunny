@@ -55,4 +55,32 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     public void deleteProduct(Long id) {
         removeById(id);
     }
+
+    @Override
+    public void deleteBatch(List<Long> ids) {
+        if (ids != null && !ids.isEmpty()) {
+            removeByIds(ids);
+        }
+    }
+
+    @Override
+    public void updateStatus(Long id, Integer status) {
+        Product product = new Product();
+        product.setId(id);
+        product.setStatus(status);
+        updateById(product);
+    }
+
+    @Override
+    public void updateStatusBatch(List<Long> ids, Integer status) {
+        if (ids != null && !ids.isEmpty()) {
+            List<Product> products = ids.stream().map(id -> {
+                Product p = new Product();
+                p.setId(id);
+                p.setStatus(status);
+                return p;
+            }).collect(java.util.stream.Collectors.toList());
+            updateBatchById(products);
+        }
+    }
 }

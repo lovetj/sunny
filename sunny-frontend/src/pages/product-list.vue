@@ -1,17 +1,5 @@
 <template>
   <view class="product-list-page">
-    <view class="header">
-      <view class="header-content">
-        <view class="back-btn" @click="goBack">
-          <text>‹</text>
-        </view>
-        <view class="header-title">
-          <text>{{ categoryName || '全部商品' }}</text>
-        </view>
-        <view class="header-right"></view>
-      </view>
-    </view>
-
     <view class="filter-bar">
       <view class="filter-item" :class="{ active: sortType === 'default' }" @click="changeSort('default')">
         <text>综合</text>
@@ -61,7 +49,7 @@
 </template>
 
 <script>
-import api from '../../api/index'
+import api from '../api/index'
 
 export default {
   data() {
@@ -79,6 +67,9 @@ export default {
     }
     if (options.name) {
       this.categoryName = decodeURIComponent(options.name)
+      uni.setNavigationBarTitle({
+        title: this.categoryName
+      })
     }
     this.loadProduct()
   },
@@ -107,7 +98,7 @@ export default {
       }
     },
     goToDetail(id) {
-      uni.navigateTo({ url: `/pages/product/detail?id=${id}` })
+      uni.navigateTo({ url: `/pages/product-detail?id=${id}` })
     },
     goBack() {
       uni.navigateBack()
@@ -129,52 +120,12 @@ page {
   padding-bottom: 40rpx;
 }
 
-.header {
-  background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
-  padding: 20rpx 24rpx;
-  padding-top: calc(20rpx + var(--status-bar-height, 0));
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.back-btn {
-  width: 60rpx;
-  height: 60rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48rpx;
-  color: #fff;
-}
-
-.header-title {
-  flex: 1;
-  text-align: center;
-}
-
-.header-title text {
-  font-size: 34rpx;
-  font-weight: bold;
-  color: #fff;
-}
-
-.header-right {
-  width: 60rpx;
-}
-
 .filter-bar {
   display: flex;
   background: #fff;
   padding: 20rpx 0;
   position: sticky;
-  top: calc(100rpx + var(--status-bar-height, 0));
+  top: 0;
   z-index: 99;
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 }

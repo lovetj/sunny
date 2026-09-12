@@ -4,11 +4,16 @@ server:
     context-path: /
 
 spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 50MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/sunny?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: 123456
+    password: root
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -50,3 +55,7 @@ logging:
   level:
     com.sunny: debug
     org.springframework: info
+
+file:
+  base-server: http://localhost:8081/sunny_file
+  base-path: D:\\soft\\apache-tomcat-8.5.63\\webapps\\sunny_file

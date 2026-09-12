@@ -17,9 +17,11 @@ export default {
 </script>
 
 <style>
-page {
+html, body, page, uni-page-body {
   background-color: #f5f5f5;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  overscroll-behavior-x: none;
+  overscroll-behavior: none;
 }
 
 .container {

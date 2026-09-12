@@ -5,8 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Sunny农产品电商</title>
     <style>
-      * { margin: 0; padding: 0; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+      /* ====== 框架元素 height 传递 ======
+         uni-app H5 页面 <style> 会被编译成 [data-v-xxx] 作用域，
+         page/uni-page/uni-page-wrapper/uni-page-body 这些框架元素不带作用域属性，
+         所以页面里写的 height:100% 规则根本命不中它们。
+         必须在 index.html 内联 style 里设置，才能让高度从 html 传到 .index-page。 */
+      uni-app,
+      uni-page,
+      uni-page-wrapper,
+      uni-page-body {
+        width: 100%;
+        height: 100%;
+        max-width: 100vw;
+        overflow: hidden;
+      }
+
+      /* ====== touch-action 策略 ======
+         浏览器触摸手势的 touch-action 对「被触摸目标的祖先链」取交集。 */
+
+      /* 基础层：html/body/框架元素允许 pan-x pan-y，给所有区域开启横向可能性 */
+      html,
+      body,
+      uni-app,
+      uni-page,
+      uni-page-wrapper,
+      uni-page-body {
+        touch-action: pan-x pan-y;
+        overscroll-behavior-x: none;
+      }
+
+      /* 纵向 scroll-view（外层 .uni-scroll-view + .uni-scroll-view-wrap）只负责纵向滚动，
+         不要让它们声明 pan-x，否则会拦截内层横向区域的触摸手势 */
+      .uni-scroll-view,
+      .uni-scroll-view-wrap {
+        touch-action: pan-y;
+      }
+
+      /* 横向滚动区域（热销商品等）覆盖为 pan-x pan-y */
+      .product-scroll-container,
+      .product-scroll-container * {
+        touch-action: pan-x pan-y !important;
+      }
     </style>
   </head>
   <body>

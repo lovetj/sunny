@@ -3,15 +3,19 @@ package com.sunny.controller;
 import com.sunny.common.PageResult;
 import com.sunny.common.Result;
 import com.sunny.dto.BatchStatusDTO;
+import com.sunny.dto.LoginDTO;
 import com.sunny.dto.PageDTO;
 import com.sunny.dto.UserDTO;
 import com.sunny.entity.User;
 import com.sunny.service.UserService;
+import com.sunny.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
@@ -19,6 +23,45 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @PostMapping("/login")
+    public Result<Map<String, Object>> login(@Valid @RequestBody LoginDTO dto) {
+        String token = userService.login(dto);
+        User user = userService.getByUsername(dto.getUsername());
+        if (user != null) {
+            user.setPassword(null);
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("token", token);
+        data.put("user", user);
+        return Result.success(data);
+    }
+
+    @PostMapping("/register")
+    public Result<Void> register(@RequestBody LoginDTO dto) {
+        userService.register(dto);
+        return Result.success();
+    }
+
+    @GetMapping("/info")
+    public Result<User> info(@RequestHeader(value = "Authorization", required = false) String authorization,
+                             @RequestParam(required = false) String username) {
+        User user = null;
+        if (authorization != null && jwtUtil.validateToken(authorization)) {
+            Long userId = jwtUtil.getUserId(authorization);
+            user = userService.getById(userId);
+        } else if (username != null && !username.trim().isEmpty()) {
+            user = userService.getByUsername(username);
+        }
+        if (user != null) {
+            user.setPassword(null);
+            return Result.success(user);
+        }
+        return Result.error(401, "用户未登录");
+    }
 
     @GetMapping("/list")
     public Result<List<User>> list() {

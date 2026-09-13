@@ -43,6 +43,9 @@ public class JwtUtil {
     }
 
     public Claims parseToken(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7).trim();
+        }
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
@@ -52,6 +55,9 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
             Claims claims = parseToken(token);
             return !claims.getExpiration().before(new Date());
         } catch (Exception e) {
@@ -61,6 +67,13 @@ public class JwtUtil {
 
     public Long getUserId(String token) {
         Claims claims = parseToken(token);
+        Object userIdObj = claims.get("userId");
+        if (userIdObj instanceof Number) {
+            return ((Number) userIdObj).longValue();
+        }
+        if (userIdObj instanceof String) {
+            return Long.parseLong((String) userIdObj);
+        }
         return claims.get("userId", Long.class);
     }
 

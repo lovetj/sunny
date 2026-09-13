@@ -2,6 +2,7 @@ package com.sunny.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.sunny.common.PageResult;
+import com.sunny.dto.LoginDTO;
 import com.sunny.dto.PageDTO;
 import com.sunny.dto.UserDTO;
 import com.sunny.entity.User;
@@ -9,6 +10,12 @@ import com.sunny.entity.User;
 import java.util.List;
 
 public interface UserService extends IService<User> {
+    String login(LoginDTO dto);
+
+    User getByUsername(String username);
+
+    void register(LoginDTO dto);
+
     List<User> listAll();
 
     PageResult<User> pageList(PageDTO pageDTO);

@@ -14,6 +14,10 @@
         <view class="menu-icon" style="background: #52c41a;">类</view>
         <text class="menu-text">分类管理</text>
       </view>
+      <view class="menu-item" @click="goTo('/pages/tag/list')">
+        <view class="menu-icon" style="background: #fa541c;">标</view>
+        <text class="menu-text">商品标签管理</text>
+      </view>
       <view class="menu-item" @click="goTo('/pages/banner/list')">
         <view class="menu-icon" style="background: #722ed1;">播</view>
         <text class="menu-text">轮播图管理</text>
@@ -44,6 +48,10 @@
           <text class="stats-label">分类数量</text>
         </view>
         <view class="stats-item">
+          <text class="stats-value">{{ stats.tagCount }}</text>
+          <text class="stats-label">标签数量</text>
+        </view>
+        <view class="stats-item">
           <text class="stats-value">{{ stats.bannerCount }}</text>
           <text class="stats-label">轮播图数量</text>
         </view>
@@ -70,6 +78,7 @@ export default {
       stats: {
         productCount: 0,
         categoryCount: 0,
+        tagCount: 0,
         bannerCount: 0,
         orderCount: 0,
         userCount: 0
@@ -85,15 +94,17 @@ export default {
   methods: {
     async loadStats() {
       try {
-        const [productData, categoryData, bannerData, orderData, userData] = await Promise.all([
+        const [productData, categoryData, tagData, bannerData, orderData, userData] = await Promise.all([
           api.getProductPage({ pageNum: 1, pageSize: 1 }),
           api.getCategoryPage({ pageNum: 1, pageSize: 1 }),
+          api.getTagPage({ pageNum: 1, pageSize: 1 }),
           api.getBannerPage({ pageNum: 1, pageSize: 1 }),
           api.getOrderPage({ pageNum: 1, pageSize: 1 }),
           api.getUserPage({ pageNum: 1, pageSize: 1 })
         ])
         this.stats.productCount = productData?.total || 0
         this.stats.categoryCount = categoryData?.total || 0
+        this.stats.tagCount = tagData?.total || 0
         this.stats.bannerCount = bannerData?.total || 0
         this.stats.orderCount = orderData?.total || 0
         this.stats.userCount = userData?.total || 0

@@ -1,13 +1,31 @@
 <template>
   <view class="product-detail-page" v-if="product">
-    <swiper class="product-swiper" indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff" circular>
-      <swiper-item v-if="product.image">
-        <image :src="product.image" mode="aspectFill" @click="previewImage(product.image)"></image>
-      </swiper-item>
-      <swiper-item v-for="(img, index) in imageList" :key="index">
-        <image :src="img" mode="aspectFill" @click="previewImage(img)"></image>
-      </swiper-item>
-    </swiper>
+    <view class="swiper-container">
+      <swiper
+        class="product-swiper"
+        indicator-dots
+        indicator-color="rgba(255,255,255,0.5)"
+        indicator-active-color="#fff"
+        autoplay
+        circular
+      >
+        <swiper-item v-for="(imgUrl, index) in displayImageList" :key="index">
+          <image
+            class="swiper-image"
+            :src="imgUrl"
+            mode="aspectFill"
+            @click="previewImage(imgUrl)"
+            @error="handleImageError(index)"
+          ></image>
+        </swiper-item>
+        <swiper-item v-if="displayImageList.length === 0">
+          <image class="swiper-image" :src="defaultImage" mode="aspectFill"></image>
+        </swiper-item>
+      </swiper>
+      <view class="off-shelf-banner-mask" v-if="product.status === 0">
+        <text class="off-shelf-banner-text">商品已下架</text>
+      </view>
+    </view>
 
     <view class="product-info-card">
       <view class="price-row">
@@ -16,20 +34,22 @@
           <text class="price-value">{{ product.price }}</text>
           <text class="price-unit">/{{ product.unit }}</text>
         </view>
-        <view class="sales-info">
-          <text>已售 {{ product.sales || 0 }}</text>
+        <view class="sales-stock-info">
+          <text class="stat-item">已售 {{ product.sales || 0 }}</text>
+          <text class="stat-item">库存 {{ product.stock != null ? product.stock : 999 }}</text>
         </view>
       </view>
       <text class="product-name">{{ product.name }}</text>
-      <view class="product-tags">
-        <view class="tag" v-if="product.origin">
-          <text>📍 {{ product.origin }}</text>
-        </view>
-        <view class="tag">
-          <text>✓ 品质保证</text>
-        </view>
-        <view class="tag">
-          <text>🚚 新鲜直达</text>
+      <!-- 商品标签区域：完全由接口返回的标签数据渲染，无标签时不显示 -->
+      <view class="product-tags" v-if="product.tagList && product.tagList.length > 0">
+        <view
+          class="tag-badge"
+          :class="{ 'tag-badge-hot': tag.isHotselling === 1 }"
+          v-for="tag in product.tagList"
+          :key="tag.id"
+        >
+          <image v-if="tag.image" class="tag-badge-icon" :src="formatUrl(tag.image)" mode="aspectFit"></image>
+          <text class="tag-badge-name" :class="{ 'tag-name-hot': tag.isHotselling === 1 }">{{ tag.name }}</text>
         </view>
       </view>
     </view>
@@ -42,16 +62,8 @@
           <text class="info-value">{{ product.categoryName || '农产品' }}</text>
         </view>
         <view class="info-item">
-          <text class="info-label">库存</text>
-          <text class="info-value">{{ product.stock || 999 }}{{ product.unit }}</text>
-        </view>
-        <view class="info-item">
           <text class="info-label">产地</text>
           <text class="info-value">{{ product.origin || '大山村' }}</text>
-        </view>
-        <view class="info-item">
-          <text class="info-label">单位</text>
-          <text class="info-value">{{ product.unit || '斤' }}</text>
         </view>
       </view>
     </view>
@@ -61,19 +73,6 @@
       <view class="desc-content">
         <text>{{ product.description || '农家好货，品质保证。来自大山深处的天然农产品，新鲜采摘，精心挑选，确保每一份都是优质好货。' }}</text>
       </view>
-    </view>
-
-    <view class="recommend-section" v-if="recommendList.length > 0">
-      <view class="section-title">猜你喜欢</view>
-      <scroll-view scroll-x class="recommend-scroll">
-        <view class="recommend-list">
-          <view class="recommend-item" v-for="item in recommendList" :key="item.id" @click="goToDetail(item.id)">
-            <image class="recommend-image" :src="item.image || defaultImage" mode="aspectFill"></image>
-            <text class="recommend-name">{{ item.name }}</text>
-            <text class="recommend-price">¥{{ item.price }}</text>
-          </view>
-        </view>
-      </scroll-view>
     </view>
 
     <view class="bottom-bar">
@@ -88,12 +87,17 @@
           <view class="cart-badge" v-if="cartCount > 0">{{ cartCount }}</view>
         </view>
       </view>
-      <view class="bar-right">
+      <view class="bar-right" v-if="product.status !== 0">
         <view class="bar-btn add-cart" @click="addToCart">
           <text>加入购物车</text>
         </view>
         <view class="bar-btn buy-now" @click="buyNow">
           <text>立即购买</text>
+        </view>
+      </view>
+      <view class="bar-right-off" v-else>
+        <view class="bar-btn-off">
+          <text>该商品已下架</text>
         </view>
       </view>
     </view>
@@ -102,13 +106,13 @@
       <view class="popup-mask" @click="showQuantity = false"></view>
       <view class="popup-content">
         <view class="popup-header">
-          <image class="popup-image" :src="product.image || defaultImage" mode="aspectFill"></image>
+          <image class="popup-image" :src="formatUrl(product.image) || defaultImage" mode="aspectFill"></image>
           <view class="popup-info">
             <view class="popup-price">
               <text class="price-symbol">¥</text>
               <text class="price-value">{{ product.price }}</text>
             </view>
-            <text class="popup-stock">库存: {{ product.stock || 999 }}{{ product.unit }}</text>
+            <text class="popup-stock">库存: {{ product.stock || 999 }}</text>
           </view>
           <view class="popup-close" @click="showQuantity = false">✕</view>
         </view>
@@ -132,13 +136,15 @@
 
 <script>
 import api from '../api/index'
+import { formatImageUrl, setFileBaseServer } from '../utils/request'
+import { checkLogin, isLoggedIn, updateTabBarCartBadge } from '../utils/auth'
 
 export default {
   data() {
     return {
       product: null,
       imageList: [],
-      recommendList: [],
+      displayImageList: [],
       quantity: 1,
       showQuantity: false,
       actionType: 'cart',
@@ -146,46 +152,100 @@ export default {
       defaultImage: '/static/images/product-default.jpg'
     }
   },
-  onLoad(options) {
+  async onLoad(options) {
+    await this.initFileConfig()
     if (options.id) {
       this.loadDetail(options.id)
     }
-    this.loadRecommend()
     this.updateCartCount()
   },
   onShow() {
     this.updateCartCount()
   },
   methods: {
-    async loadDetail(id) {
+    async initFileConfig() {
       try {
-        const data = await api.getProductDetail(id)
-        this.product = data
-        if (data && data.images) {
-          try {
-            this.imageList = JSON.parse(data.images)
-          } catch (e) {
-            this.imageList = []
-          }
+        const cfg = await api.getFileConfig()
+        if (cfg && cfg.baseServer) {
+          setFileBaseServer(cfg.baseServer)
         }
       } catch (e) {
-        console.error(e)
+        // 使用默认文件服务配置
       }
     },
-    async loadRecommend() {
+    formatUrl(path) {
+      if (!path) return ''
+      return formatImageUrl(path)
+    },
+    async loadDetail(id) {
       try {
-        const data = await api.getProductList()
-        this.recommendList = (data || []).slice(0, 6)
+        uni.setStorageSync('last_viewed_product_id', id)
+        const data = await api.getProductDetail(id)
+        this.product = data
+        let rawImages = []
+        if (data && data.image && typeof data.image === 'string' && data.image.trim()) {
+          rawImages.push(data.image.trim())
+        }
+        if (data && data.images) {
+          let extraImages = []
+          try {
+            if (Array.isArray(data.images)) {
+              extraImages = data.images
+            } else if (typeof data.images === 'string') {
+              const str = data.images.trim()
+              if (str.startsWith('[')) {
+                const parsed = JSON.parse(str)
+                extraImages = Array.isArray(parsed) ? parsed : []
+              } else {
+                extraImages = str.split(',').map(s => s.trim()).filter(Boolean)
+              }
+            }
+          } catch (e) {
+            if (typeof data.images === 'string') {
+              extraImages = data.images.split(',').map(s => s.trim()).filter(Boolean)
+            }
+          }
+          extraImages.forEach(img => {
+            if (typeof img === 'string') {
+              const item = img.trim()
+              if (item && !rawImages.includes(item)) {
+                rawImages.push(item)
+              }
+            }
+          })
+        }
+        this.imageList = rawImages
+        const formatted = rawImages.map(img => this.formatUrl(img)).filter(Boolean)
+        this.displayImageList = Array.from(new Set(formatted))
       } catch (e) {
         console.error(e)
       }
     },
-    updateCartCount() {
-      const cart = uni.getStorageSync('cart') || []
-      this.cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
+    handleImageError(index) {
+      if (this.displayImageList && this.displayImageList[index]) {
+        this.displayImageList[index] = this.defaultImage
+      }
+    },
+    async updateCartCount() {
+      if (!isLoggedIn()) {
+        this.cartCount = 0
+        updateTabBarCartBadge()
+        return
+      }
+      try {
+        const count = await api.getCartCount()
+        this.cartCount = count || 0
+        updateTabBarCartBadge()
+      } catch (e) {
+        this.cartCount = 0
+      }
     },
     previewImage(url) {
-      uni.previewImage({ urls: [url] })
+      const urls = this.displayImageList.length > 0 ? this.displayImageList : [url]
+      uni.previewImage({
+        current: url,
+        urls: urls
+      })
     },
     goBack() {
       uni.navigateBack()
@@ -194,17 +254,30 @@ export default {
       uni.switchTab({ url: '/pages/index' })
     },
     goCart() {
-      uni.switchTab({ url: '/pages/cart' })
+      uni.setStorageSync('cart_from_detail', true)
+      uni.switchTab({
+        url: '/pages/cart',
+        fail: () => {
+          uni.navigateTo({
+            url: '/pages/cart?from=detail',
+            fail: () => {
+              uni.reLaunch({ url: '/pages/cart' })
+            }
+          })
+        }
+      })
     },
     shareProduct() {
       uni.showToast({ title: '分享功能开发中', icon: 'none' })
     },
     addToCart() {
+      if (!checkLogin()) return
       this.actionType = 'cart'
       this.quantity = 1
       this.showQuantity = true
     },
     buyNow() {
+      if (!checkLogin()) return
       this.actionType = 'buy'
       this.quantity = 1
       this.showQuantity = true
@@ -219,27 +292,23 @@ export default {
         this.quantity++
       }
     },
-    confirmAction() {
-      const cart = uni.getStorageSync('cart') || []
-      const existIndex = cart.findIndex(p => p.id === this.product.id)
-      if (existIndex > -1) {
-        cart[existIndex].quantity += this.quantity
-      } else {
-        cart.push({ ...this.product, quantity: this.quantity })
-      }
-      uni.setStorageSync('cart', cart)
-      this.showQuantity = false
-      this.updateCartCount()
-      
-      if (this.actionType === 'cart') {
-        uni.showToast({ title: '已加入购物车', icon: 'success' })
-      } else {
-        uni.switchTab({ url: '/pages/cart' })
-      }
-    },
-    goToDetail(id) {
-      if (id !== this.product.id) {
-        uni.redirectTo({ url: `/pages/product-detail?id=${id}` })
+    async confirmAction() {
+      if (!checkLogin()) return
+      try {
+        await api.addToCart({
+          productId: this.product.id,
+          quantity: this.quantity
+        })
+        this.showQuantity = false
+        await this.updateCartCount()
+
+        if (this.actionType === 'cart') {
+          uni.showToast({ title: '已加入购物车', icon: 'success' })
+        } else {
+          this.goCart()
+        }
+      } catch (e) {
+        console.error(e)
       }
     }
   }
@@ -258,15 +327,49 @@ page {
   padding-bottom: 120rpx;
 }
 
-.product-swiper {
+.swiper-container {
+  position: relative;
   width: 100%;
   height: 750rpx;
+  overflow: hidden;
+}
+
+.product-swiper {
+  width: 100%;
+  height: 100%;
   background: #fff;
 }
 
-.product-swiper image {
+.off-shelf-banner-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.off-shelf-banner-text {
+  color: #fff;
+  font-size: 38rpx;
+  font-weight: bold;
+  letter-spacing: 6rpx;
+  padding: 16rpx 48rpx;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 40rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.product-swiper image,
+.swiper-image {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
 .product-info-card {
@@ -304,9 +407,18 @@ page {
   margin-left: 8rpx;
 }
 
+.sales-stock-info,
 .sales-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+}
+
+.stat-item {
   font-size: 24rpx;
   color: #999;
+  line-height: 1.3;
 }
 
 .product-name {
@@ -324,6 +436,40 @@ page {
   margin-top: 20rpx;
 }
 
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #f6ffed;
+  border: 1rpx solid #b7eb8f;
+  padding: 6rpx 16rpx;
+  border-radius: 24rpx;
+}
+
+.tag-badge.tag-badge-hot {
+  background: #fff2e8;
+  border-color: #ffbb96;
+}
+
+.tag-badge-icon {
+  width: 28rpx;
+  height: 28rpx;
+  margin-right: 8rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+}
+
+.tag-badge-name {
+  font-size: 24rpx;
+  color: #389e0d;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.tag-badge-name.tag-name-hot {
+  color: #fa541c;
+  font-weight: 600;
+}
+
 .tag {
   background: #f5f5f5;
   padding: 8rpx 16rpx;
@@ -332,7 +478,7 @@ page {
   color: #666;
 }
 
-.info-section, .desc-section, .recommend-section {
+.info-section, .desc-section {
   background: #fff;
   padding: 24rpx;
   margin-bottom: 20rpx;
@@ -347,72 +493,37 @@ page {
 }
 
 .info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
 }
 
 .info-item {
   display: flex;
-  justify-content: space-between;
-  padding: 16rpx;
+  align-items: center;
+  padding: 18rpx 20rpx;
   background: #fafafa;
   border-radius: 12rpx;
 }
 
 .info-label {
+  width: 140rpx;
+  flex-shrink: 0;
   font-size: 26rpx;
   color: #999;
 }
 
 .info-value {
+  flex: 1;
   font-size: 26rpx;
   color: #333;
+  word-break: break-all;
 }
 
 .desc-content {
   font-size: 28rpx;
   color: #666;
   line-height: 1.8;
-}
-
-.recommend-scroll {
-  white-space: nowrap;
-}
-
-.recommend-list {
-  display: inline-flex;
-  gap: 20rpx;
-}
-
-.recommend-item {
-  width: 200rpx;
-  display: inline-block;
-}
-
-.recommend-image {
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: 12rpx;
-  background: #f5f5f5;
-}
-
-.recommend-name {
-  font-size: 26rpx;
-  color: #333;
-  display: block;
-  margin-top: 12rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recommend-price {
-  font-size: 28rpx;
-  color: #FF5722;
-  font-weight: bold;
-  display: block;
-  margin-top: 8rpx;
 }
 
 .bottom-bar {
@@ -490,6 +601,25 @@ page {
 .buy-now {
   background: linear-gradient(135deg, #4CAF50, #8BC34A);
   color: #fff;
+}
+
+.bar-right-off {
+  flex: 1;
+  display: flex;
+  margin-left: 20rpx;
+}
+
+.bar-btn-off {
+  flex: 1;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  background: #e0e0e0;
+  color: #999;
 }
 
 .quantity-popup {
@@ -651,7 +781,7 @@ page {
     height: 600rpx;
   }
   
-  .product-info-card, .info-section, .desc-section, .recommend-section {
+  .product-info-card, .info-section, .desc-section {
     max-width: 1200rpx;
     margin: 20rpx auto;
   }

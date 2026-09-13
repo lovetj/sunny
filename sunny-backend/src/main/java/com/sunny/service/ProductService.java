@@ -12,6 +12,8 @@ import java.util.List;
 public interface ProductService extends IService<Product> {
     List<Product> listAll();
 
+    List<Product> listHotselling(Integer status);
+
     List<Product> listByCategoryId(Long categoryId);
 
     PageResult<Product> pageList(PageDTO pageDTO);

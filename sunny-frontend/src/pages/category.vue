@@ -24,12 +24,23 @@
           class="tab-item" 
           :class="{ active: activeCategory === 0 }" 
           @click="selectCategory(0)">
-          <image 
-            class="tab-icon-img" 
-            :src="activeCategory === 0 ? allCategoryIconActive : allCategoryIcon" 
-            mode="aspectFit"
-          ></image>
+          <view class="tab-icon">
+            <image 
+              class="tab-icon-img" 
+              :src="activeCategory === 0 ? allCategoryIconActive : allCategoryIcon" 
+              mode="aspectFit"
+            ></image>
+          </view>
           <text class="tab-name">全部</text>
+        </view>
+        <view 
+          class="tab-item" 
+          :class="{ active: activeCategory === 'hotselling' }" 
+          @click="selectCategory('hotselling')">
+          <view class="tab-icon hot-tab-icon">
+            <text class="hot-tab-emoji">🔥</text>
+          </view>
+          <text class="tab-name">热销商品</text>
         </view>
         <view 
           class="tab-item" 
@@ -37,13 +48,15 @@
           v-for="(item, index) in categoryList" 
           :key="item.id || index"
           @click="selectCategory(item.id)">
-          <image
-            v-if="hasImageIcon(item)"
-            class="tab-icon-img"
-            :src="formatUrl(item.icon)"
-            mode="aspectFill"
-            @error="handleCategoryIconError(index)"
-          ></image>
+          <view class="tab-icon">
+            <image
+              v-if="hasImageIcon(item)"
+              class="tab-icon-img"
+              :src="formatUrl(item.icon)"
+              mode="aspectFill"
+              @error="handleCategoryIconError(index)"
+            ></image>
+          </view>
           <text class="tab-name">{{ item.name }}</text>
         </view>
       </scroll-view>
@@ -67,29 +80,42 @@
           <view class="product-list">
             <view 
               class="product-item" 
+              :class="{ 'product-item-off': item.status === 0, 'is-disabled': item.status === 0 }"
               v-for="item in productList" 
               :key="item.id" 
               @click="goToDetail(item.id)"
             >
-              <image 
-                class="product-image" 
-                :src="formatUrl(item.image) || defaultProductImage" 
-                mode="aspectFill"
-              ></image>
+              <view class="product-image-wrap">
+                <image 
+                  class="product-image" 
+                  :src="formatUrl(item.image) || defaultProductImage" 
+                  mode="aspectFill"
+                ></image>
+                <view class="off-shelf-badge" v-if="item.status === 0">已下架</view>
+              </view>
               <view class="product-info">
                 <view class="product-info-top">
-                  <text class="product-name">{{ item.name }}</text>
-                  <text class="product-desc">{{ item.description || '农家好货，品质保证' }}</text>
+                  <view class="product-name-row">
+                    <text class="product-name" :class="{ 'text-disabled': item.status === 0 }">{{ item.name }}</text>
+                    <text class="off-shelf-tag" v-if="item.status === 0">已下架</text>
+                  </view>
+                  <text class="product-desc" :class="{ 'text-disabled': item.status === 0 }">{{ item.description || '农家好货，品质保证' }}</text>
                 </view>
                 <view class="product-bottom">
                   <view class="product-price">
-                    <text class="price-symbol">¥</text>
-                    <text class="price">{{ item.price }}</text>
-                    <text class="unit">/{{ item.unit }}</text>
+                    <text class="price-symbol" :class="{ 'text-disabled': item.status === 0 }">¥</text>
+                    <text class="price" :class="{ 'text-disabled': item.status === 0 }">{{ item.price }}</text>
+                    <text class="unit" :class="{ 'text-disabled': item.status === 0 }">/{{ item.unit }}</text>
                   </view>
-                  <view class="add-cart" @click.stop="addToCart(item)">
+                  <view class="add-cart" v-if="item.status !== 0" @click.stop="addToCart(item)">
                     <text class="cart-plus">+</text>
                     <text class="cart-text">加购物车</text>
+                    <view class="cart-badge" v-if="getCartItemQuantity(item.id) > 0">
+                      {{ getCartItemQuantity(item.id) }}
+                    </view>
+                  </view>
+                  <view class="quantity-disabled" v-else>
+                    <text class="quantity-tip">已不可购买</text>
                   </view>
                 </view>
               </view>
@@ -126,12 +152,14 @@
 <script>
 import api from '../api/index'
 import { formatImageUrl, setFileBaseServer } from '../utils/request'
+import { checkLogin, isLoggedIn, updateTabBarCartBadge } from '../utils/auth'
 
 export default {
   data() {
     return {
       categoryList: [],
       productList: [],
+      cartItemMap: {},
       activeCategory: 0,
       fromHome: false,
       defaultProductImage: '/static/images/product-default.jpg',
@@ -161,7 +189,7 @@ export default {
       this.fromHome = true
     }
     if (options && options.categoryId !== undefined) {
-      this.activeCategory = Number(options.categoryId)
+      this.activeCategory = options.categoryId === 'hotselling' ? 'hotselling' : Number(options.categoryId)
     }
     if (options && (options.focus === '1' || options.focus === true)) {
       this.triggerSearchFocus()
@@ -185,13 +213,15 @@ export default {
     }
 
     this.updateNavBackButton(this.fromHome)
+    await this.loadCartMap()
+    updateTabBarCartBadge()
 
     if (targetId !== null && targetId !== undefined && targetId !== '') {
-      this.activeCategory = Number(targetId)
+      this.activeCategory = targetId === 'hotselling' ? 'hotselling' : Number(targetId)
       uni.removeStorageSync('selectedCategoryId')
-      if (this.categoryList.length > 0) {
-        await this.loadProducts(true)
-      }
+      await this.loadProducts(true)
+    } else {
+      await this.loadProducts(true)
     }
   },
   onHide() {
@@ -316,22 +346,49 @@ export default {
 
       this.loading = true
       try {
-        const params = {
-          pageNum: this.pageNum,
-          pageSize: this.pageSize,
-          status: 1
-        }
-        if (this.keyword && this.keyword.trim()) {
-          params.keyword = this.keyword.trim()
-        }
-        if (this.activeCategory !== 0) {
-          params.categoryId = this.activeCategory
-        }
+        let records = []
+        let total = 0
+        let pages = 1
 
-        const res = await api.getProductPage(params)
-        const records = (res && Array.isArray(res.records)) ? res.records : []
-        const total = (res && typeof res.total === 'number') ? res.total : (Number(res && res.total) || records.length)
-        const pages = (res && typeof res.pages === 'number') ? res.pages : (Math.ceil(total / this.pageSize) || 1)
+        if (this.activeCategory === 'hotselling') {
+          // 热销商品
+          const hotList = await api.getHotsellingList()
+          let list = Array.isArray(hotList) ? hotList : []
+          if (this.keyword && this.keyword.trim()) {
+            const kw = this.keyword.trim().toLowerCase()
+            list = list.filter(item => (item.name && item.name.toLowerCase().includes(kw)) || (item.description && item.description.toLowerCase().includes(kw)))
+          }
+          list.sort((a, b) => {
+            const statusA = a.status != null ? a.status : 1
+            const statusB = b.status != null ? b.status : 1
+            if (statusA !== statusB) {
+              return statusB - statusA
+            }
+            const sortA = a.sort != null ? a.sort : 0
+            const sortB = b.sort != null ? b.sort : 0
+            return sortA - sortB
+          })
+          total = list.length
+          pages = Math.ceil(total / this.pageSize) || 1
+          const startIndex = (this.pageNum - 1) * this.pageSize
+          records = list.slice(startIndex, startIndex + this.pageSize)
+        } else {
+          const params = {
+            pageNum: this.pageNum,
+            pageSize: this.pageSize
+          }
+          if (this.keyword && this.keyword.trim()) {
+            params.keyword = this.keyword.trim()
+          }
+          if (this.activeCategory !== 0) {
+            params.categoryId = this.activeCategory
+          }
+
+          const res = await api.getProductPage(params)
+          records = (res && Array.isArray(res.records)) ? res.records : []
+          total = (res && typeof res.total === 'number') ? res.total : (Number(res && res.total) || records.length)
+          pages = (res && typeof res.pages === 'number') ? res.pages : (Math.ceil(total / this.pageSize) || 1)
+        }
         
         this.total = total
         this.totalPages = pages
@@ -498,16 +555,49 @@ export default {
     goToDetail(id) {
       uni.navigateTo({ url: `/pages/product-detail?id=${id}` })
     },
-    addToCart(item) {
-      const cart = uni.getStorageSync('cart') || []
-      const existIndex = cart.findIndex(p => p.id === item.id)
-      if (existIndex > -1) {
-        cart[existIndex].quantity += 1
-      } else {
-        cart.push({ ...item, quantity: 1 })
+    getCartItemQuantity(productId) {
+      if (!productId || !this.cartItemMap) return 0
+      return this.cartItemMap[productId] || 0
+    },
+    async loadCartMap() {
+      if (!isLoggedIn()) {
+        this.cartItemMap = {}
+        return
       }
-      uni.setStorageSync('cart', cart)
-      uni.showToast({ title: '已加入购物车', icon: 'success' })
+      try {
+        const list = await api.getCartList()
+        const map = {}
+        if (Array.isArray(list)) {
+          list.forEach(item => {
+            if (item.productId != null) {
+              map[item.productId] = item.quantity || 0
+            }
+          })
+        }
+        this.cartItemMap = map
+      } catch (e) {
+        this.cartItemMap = {}
+      }
+    },
+    async addToCart(item) {
+      if (!checkLogin()) return
+      if (!item || !item.id) return
+      try {
+        await api.addToCart({
+          productId: item.id,
+          quantity: 1
+        })
+        const prevQty = this.cartItemMap[item.id] || 0
+        const newQty = prevQty + 1
+        this.cartItemMap = {
+          ...this.cartItemMap,
+          [item.id]: newQty
+        }
+        updateTabBarCartBadge()
+        uni.showToast({ title: '已加入购物车', icon: 'success' })
+      } catch (e) {
+        console.error(e)
+      }
     }
   }
 }
@@ -707,13 +797,26 @@ uni-page-wrapper {
   border-left-color: #4CAF50;
 }
 
-.tab-icon-img {
+.tab-icon {
   width: 32rpx;
   height: 32rpx;
-  border-radius: 6rpx;
   margin-right: 8rpx;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-icon-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 6rpx;
   display: block;
+}
+
+.hot-tab-emoji {
+  font-size: 24rpx;
+  line-height: 1;
 }
 
 .tab-name {
@@ -794,16 +897,40 @@ uni-page-wrapper {
   opacity: 0.92;
 }
 
-.product-image {
-  width: 130rpx !important;
-  min-width: 130rpx !important;
-  max-width: 130rpx !important;
-  height: 130rpx !important;
-  border-radius: 10rpx;
+.product-item.is-disabled {
+  background: #fbfbfb;
+}
+
+.product-image-wrap {
+  width: 130rpx;
+  height: 130rpx;
+  border-radius: 12rpx;
   margin-right: 14rpx;
   flex-shrink: 0 !important;
+  position: relative;
+  overflow: hidden;
   background: #f5f5f5;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
   object-fit: cover;
+  display: block;
+}
+
+.off-shelf-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.65);
+  color: #ffffff;
+  font-size: 20rpx;
+  text-align: center;
+  line-height: 32rpx;
+  z-index: 2;
 }
 
 .product-info {
@@ -825,6 +952,13 @@ uni-page-wrapper {
   overflow: hidden;
 }
 
+.product-name-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+}
+
 .product-name {
   font-size: 26rpx;
   font-weight: 600;
@@ -834,9 +968,34 @@ uni-page-wrapper {
   white-space: nowrap;
   word-break: break-all;
   line-height: 1.3;
-  display: block;
-  width: 100%;
-  max-width: 100%;
+  flex: 1;
+  min-width: 0;
+}
+
+.off-shelf-tag {
+  font-size: 20rpx;
+  color: #ff4d4f;
+  background: #fff1f0;
+  border: 1rpx solid #ffccc7;
+  padding: 2rpx 8rpx;
+  border-radius: 6rpx;
+  margin-left: 8rpx;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.text-disabled {
+  color: #999999 !important;
+}
+
+.quantity-disabled {
+  display: flex;
+  align-items: center;
+}
+
+.quantity-tip {
+  font-size: 22rpx;
+  color: #999999;
 }
 
 .product-desc {
@@ -891,14 +1050,33 @@ uni-page-wrapper {
 }
 
 .add-cart {
-  background: linear-gradient(135deg, #4CAF50, #43A047);
+  background: #4CAF50;
   color: #fff;
   padding: 6rpx 14rpx;
   border-radius: 24rpx;
   display: flex;
   align-items: center;
+  justify-content: center;
   box-shadow: 0 2rpx 8rpx rgba(76, 175, 80, 0.2);
   flex-shrink: 0;
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -10rpx;
+  right: -8rpx;
+  background: #FF5722;
+  color: #fff;
+  font-size: 18rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 20rpx;
+  min-width: 28rpx;
+  text-align: center;
+  line-height: 1.2;
+  box-shadow: 0 2rpx 6rpx rgba(255, 87, 34, 0.35);
+  font-weight: bold;
+  box-sizing: border-box;
 }
 
 .cart-plus {
@@ -906,6 +1084,10 @@ uni-page-wrapper {
   font-weight: bold;
   margin-right: 4rpx;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -2rpx;
 }
 
 .cart-text {

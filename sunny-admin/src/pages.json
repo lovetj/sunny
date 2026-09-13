@@ -44,6 +44,21 @@
       }
     },
     {
+      "path": "pages/tag/list",
+      "style": {
+        "navigationBarTitleText": "商品标签管理"
+      }
+    },
+    {
+      "path": "pages/tag/edit",
+      "style": {
+        "navigationBarTitleText": "编辑商品标签",
+        "app-plus": {
+          "bounce": "none"
+        }
+      }
+    },
+    {
       "path": "pages/banner/list",
       "style": {
         "navigationBarTitleText": "轮播图管理"

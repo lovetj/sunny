@@ -8,6 +8,7 @@
         <result property="name" column="name"/>
         <result property="image" column="image"/>
         <result property="images" column="images"/>
+        <result property="tags" column="tags"/>
         <result property="price" column="price"/>
         <result property="unit" column="unit"/>
         <result property="stock" column="stock"/>
@@ -36,7 +37,7 @@
                 AND p.status = #{status}
             </if>
         </where>
-        ORDER BY p.sort ASC, p.create_time DESC
+        ORDER BY p.status DESC, p.sort ASC, p.create_time DESC
     </select>
 
 </mapper>

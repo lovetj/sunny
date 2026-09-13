@@ -19,6 +19,8 @@ public class ProductDTO {
 
     private String images;
 
+    private String tags;
+
     @NotNull(message = "价格不能为空")
     private java.math.BigDecimal price;
 

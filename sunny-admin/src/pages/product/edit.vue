@@ -16,6 +16,33 @@
       </view>
 
       <view class="form-item">
+        <view class="label-row">
+          <text class="form-label">商品标签（支持多选）</text>
+          <text class="form-tip">支持多选，前台详情将按“图片+标签名”展示</text>
+        </view>
+        <view class="tag-select-grid" v-if="allTags.length > 0">
+          <view
+            class="tag-select-chip"
+            :class="{ active: isTagSelected(tag.id) }"
+            v-for="tag in allTags"
+            :key="tag.id"
+            @click="toggleTag(tag.id)"
+          >
+            <image
+              v-if="tag.image"
+              class="tag-chip-icon"
+              :src="formatUrl(tag.image)"
+              mode="aspectFit"
+            ></image>
+            <text class="tag-chip-name">{{ tag.name }}</text>
+          </view>
+        </view>
+        <view class="empty-tag-tip" v-else>
+          <text>暂无可选标签（可前往“商品标签管理”添加）</text>
+        </view>
+      </view>
+
+      <view class="form-item">
         <text class="form-label">商品价格 *</text>
         <input class="form-input" v-model="form.price" type="digit" placeholder="请输入价格" />
       </view>
@@ -147,9 +174,12 @@ export default {
         description: '',
         image: '',
         images: '',
+        tags: '',
         status: 1,
         sort: 0
       },
+      allTags: [],
+      selectedTagIds: [],
       imageList: [],
       categoryList: [],
       categoryIndex: 0,
@@ -168,6 +198,7 @@ export default {
   },
   async onLoad(options) {
     await this.initFileConfig()
+    await this.loadTags()
     if (options.id) {
       this.id = parseInt(options.id)
       await this.loadDetail()
@@ -202,10 +233,52 @@ export default {
         console.error(e)
       }
     },
+    async loadTags() {
+      try {
+        const data = await api.getTagList()
+        this.allTags = (data || []).filter(t => t.status === 1)
+      } catch (e) {
+        console.error('加载标签列表失败', e)
+      }
+    },
+    isTagSelected(id) {
+      return this.selectedTagIds.includes(id)
+    },
+    toggleTag(id) {
+      const idx = this.selectedTagIds.indexOf(id)
+      if (idx > -1) {
+        this.selectedTagIds.splice(idx, 1)
+      } else {
+        this.selectedTagIds.push(id)
+      }
+      this.syncTagsToForm()
+    },
+    syncTagsToForm() {
+      this.form.tags = this.selectedTagIds.length > 0 ? JSON.stringify(this.selectedTagIds) : ''
+    },
     async loadDetail() {
       try {
         const data = await api.getProductDetail(this.id)
         this.form = { ...this.form, ...data }
+        if (this.form.tags) {
+          try {
+            if (Array.isArray(this.form.tags)) {
+              this.selectedTagIds = this.form.tags.map(v => Number(v)).filter(v => !isNaN(v))
+            } else if (typeof this.form.tags === 'string') {
+              const str = this.form.tags.trim()
+              if (str.startsWith('[')) {
+                const parsed = JSON.parse(str)
+                this.selectedTagIds = Array.isArray(parsed) ? parsed.map(v => Number(v)).filter(v => !isNaN(v)) : []
+              } else {
+                this.selectedTagIds = str.split(',').map(s => Number(s.trim())).filter(v => !isNaN(v))
+              }
+            }
+          } catch (e) {
+            this.selectedTagIds = []
+          }
+        } else {
+          this.selectedTagIds = []
+        }
         if (this.form.images) {
           try {
             if (Array.isArray(this.form.images)) {
@@ -502,6 +575,7 @@ export default {
       }
 
       this.syncImagesToForm()
+      this.syncTagsToForm()
 
       try {
         if (this.id) {
@@ -583,6 +657,56 @@ export default {
   line-height: 80rpx;
   box-sizing: border-box;
   color: #333;
+}
+
+.tag-select-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.tag-select-chip {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 20rpx;
+  background: #f5f5f5;
+  border: 1rpx solid #e0e0e0;
+  border-radius: 32rpx;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.tag-select-chip.active {
+  background: #e6f7ff;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.tag-chip-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 8rpx;
+  border-radius: 4rpx;
+}
+
+.tag-chip-name {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.tag-select-chip.active .tag-chip-name {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.empty-tag-tip {
+  padding: 16rpx;
+  background: #fafafa;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #999;
 }
 
 .label-row {

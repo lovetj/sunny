@@ -1,20 +1,28 @@
 import request from '../utils/request'
 
 export default {
+  // Banner
   getBannerList() {
     return request.get('/banner/list')
   },
 
+  // File
   getFileConfig() {
     return request.get('/file/config')
   },
 
+  // Category
   getCategoryList() {
     return request.get('/category/list')
   },
 
+  // Product
   getProductList() {
     return request.get('/product/list')
+  },
+
+  getHotsellingList(params) {
+    return request.get('/product/hotselling', params)
   },
 
   getProductByCategory(categoryId) {
@@ -29,6 +37,53 @@ export default {
     return request.get('/product/page', params)
   },
 
+  // User Auth & Info
+  login(data) {
+    return request.post('/user/login', data)
+  },
+
+  register(data) {
+    return request.post('/user/register', data)
+  },
+
+  getUserInfo() {
+    return request.get('/user/info')
+  },
+
+  // Shopping Cart
+  getCartList() {
+    return request.get('/cart/list')
+  },
+
+  getCartCount() {
+    return request.get('/cart/count')
+  },
+
+  addToCart(data) {
+    return request.post('/cart/add', data)
+  },
+
+  updateCartQuantity(data) {
+    return request.post('/cart/update', data)
+  },
+
+  changeCartQuantity(data) {
+    return request.post('/cart/change', data)
+  },
+
+  deleteCartByProduct(productId) {
+    return request.delete(`/cart/product/${productId}`)
+  },
+
+  deleteCartItem(id) {
+    return request.delete(`/cart/${id}`)
+  },
+
+  clearCart() {
+    return request.delete('/cart/clear')
+  },
+
+  // Logistics & Config
   getLogisticsList() {
     return request.get('/logistics/list')
   },
@@ -37,6 +92,7 @@ export default {
     return request.get(`/config/${key}`)
   },
 
+  // Order
   createOrder(data) {
     return request.post('/order/create', data)
   },

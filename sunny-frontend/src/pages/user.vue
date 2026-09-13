@@ -1,8 +1,9 @@
 <template>
   <view class="user-page">
-    <view class="user-header">
+    <view class="user-header" @click="handleHeaderClick">
       <image class="avatar" src="/static/images/avatar.png" mode="aspectFill"></image>
-      <text class="nickname">山里来的朋友</text>
+      <text class="nickname">{{ userInfo ? (userInfo.nickname || userInfo.username) : '点击登录/注册' }}</text>
+      <text class="user-tip" v-if="!userInfo">登录后享受更多专属服务</text>
     </view>
 
     <view class="menu-section">
@@ -47,15 +48,21 @@
         </view>
       </view>
     </view>
+
+    <view class="logout-section" v-if="userInfo">
+      <view class="logout-btn" @click="handleLogout">退出登录</view>
+    </view>
   </view>
 </template>
 
 <script>
 import api from '../api/index'
+import { getUserInfo, clearLoginData, isLoggedIn, updateTabBarCartBadge } from '../utils/auth'
 
 export default {
   data() {
     return {
+      userInfo: null,
       config: {
         wechat: '',
         douyin: '',
@@ -64,9 +71,48 @@ export default {
     }
   },
   onShow() {
+    this.checkUser()
     this.loadConfig()
+    updateTabBarCartBadge()
   },
   methods: {
+    async checkUser() {
+      if (isLoggedIn()) {
+        const localUser = getUserInfo()
+        if (localUser) {
+          this.userInfo = localUser
+        }
+        try {
+          const remoteUser = await api.getUserInfo()
+          if (remoteUser) {
+            this.userInfo = remoteUser
+            uni.setStorageSync('user_info', remoteUser)
+          }
+        } catch (e) {
+          // Token 可能失效
+        }
+      } else {
+        this.userInfo = null
+      }
+    },
+    handleHeaderClick() {
+      if (!this.userInfo) {
+        uni.navigateTo({ url: '/pages/login' })
+      }
+    },
+    handleLogout() {
+      uni.showModal({
+        title: '提示',
+        content: '确定要退出登录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            clearLoginData()
+            this.userInfo = null
+            uni.showToast({ title: '已退出登录', icon: 'none' })
+          }
+        }
+      })
+    },
     async loadConfig() {
       try {
         const [wechat, douyin, phone] = await Promise.all([
@@ -82,6 +128,10 @@ export default {
       }
     },
     goToOrder() {
+      if (!isLoggedIn()) {
+        uni.navigateTo({ url: '/pages/login' })
+        return
+      }
       uni.navigateTo({ url: '/pages/order' })
     },
     goToAddress() {
@@ -91,6 +141,7 @@ export default {
       uni.navigateTo({ url: '/pages/logistics' })
     },
     copyWechat() {
+      if (!this.config.wechat) return
       uni.setClipboardData({
         data: this.config.wechat,
         success: () => {
@@ -99,6 +150,7 @@ export default {
       })
     },
     copyDouyin() {
+      if (!this.config.douyin) return
       uni.setClipboardData({
         data: this.config.douyin,
         success: () => {
@@ -119,6 +171,7 @@ export default {
 .user-page {
   background: #f8f8f8;
   min-height: 100vh;
+  padding-bottom: 40rpx;
 }
 
 .user-header {
@@ -127,6 +180,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  cursor: pointer;
 }
 
 .avatar {
@@ -140,6 +194,13 @@ export default {
 .nickname {
   font-size: 32rpx;
   color: #fff;
+  font-weight: bold;
+}
+
+.user-tip {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 8rpx;
 }
 
 .menu-section {
@@ -220,5 +281,20 @@ export default {
   color: #333;
   margin-top: 8rpx;
   display: block;
+}
+
+.logout-section {
+  margin: 40rpx 20rpx;
+}
+
+.logout-btn {
+  background: #fff;
+  color: #ff4d4f;
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 }
 </style>

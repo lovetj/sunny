@@ -20,6 +20,19 @@ CREATE TABLE IF NOT EXISTS `category` (
     UNIQUE KEY `uk_code` (`code`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品分类表';
 
+-- 商品标签表
+CREATE TABLE IF NOT EXISTS `product_tag` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name` VARCHAR(50) NOT NULL COMMENT '标签名称',
+    `image` VARCHAR(255) DEFAULT NULL COMMENT '标签图片',
+    `sort` INT DEFAULT 0 COMMENT '排序',
+    `is_hotselling` TINYINT DEFAULT 0 COMMENT '是否热销 0否 1是',
+    `status` TINYINT DEFAULT 1 COMMENT '状态 0禁用 1启用',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品标签表';
+
 -- 商品表
 CREATE TABLE IF NOT EXISTS `product` (
                                          `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -27,6 +40,7 @@ CREATE TABLE IF NOT EXISTS `product` (
                                          `name` VARCHAR(100) NOT NULL COMMENT '商品名称',
     `image` VARCHAR(255) DEFAULT NULL COMMENT '商品图片',
     `images` TEXT DEFAULT NULL COMMENT '商品图片集(JSON)',
+    `tags` TEXT DEFAULT NULL COMMENT '商品标签(JSON或逗号分隔)',
     `price` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT '价格',
     `unit` VARCHAR(20) DEFAULT '斤' COMMENT '单位',
     `stock` INT DEFAULT 999 COMMENT '库存',
@@ -55,6 +69,20 @@ CREATE TABLE IF NOT EXISTS `user` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_username` (`username`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 购物车表
+CREATE TABLE IF NOT EXISTS `cart` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `product_id` BIGINT NOT NULL COMMENT '商品ID',
+    `quantity` INT NOT NULL DEFAULT 1 COMMENT '数量',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_product` (`user_id`, `product_id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_product_id` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='购物车表';
 
 -- 订单表
 CREATE TABLE IF NOT EXISTS `order` (
@@ -145,6 +173,12 @@ INSERT INTO `category` (`name`, `code`, `icon`, `sort`, `status`) VALUES
 ('酒', 'jiu', '/static/icons/jiu.png', 4, 1),
 ('养殖', 'yangzhi', '/static/icons/yangzhi.png', 5, 1);
 
+-- 初始化商品标签数据
+INSERT INTO `product_tag` (`name`, `image`, `sort`, `is_hotselling`, `status`) VALUES
+('热销推荐', '/static/icons/ganhuo.png', 1, 1, 1),
+('新鲜采摘', '/static/icons/shucai.png', 2, 0, 1),
+('农家自产', '/static/icons/oil.png', 3, 0, 1);
+
 -- 初始化商品数据
 INSERT INTO `product` (`category_id`, `name`, `price`, `unit`, `description`, `origin`, `status`, `sort`) VALUES
 (1, '白辣椒', 25.00, '斤', '农家晒制白辣椒，香辣可口，是下饭的好伴侣', '大山村', 1, 1),
@@ -179,3 +213,7 @@ INSERT INTO `config` (`config_key`, `config_value`, `description`) VALUES
 -- 初始化管理员账号 (密码: admin123)
 INSERT INTO `admin` (`username`, `password`, `real_name`, `status`) VALUES
 ('admin', '$2a$10$EqKcp1WFKVQISheBxmXJGePJwJbvHfEFvEqJjGWQv2Mb6AqPQvWIi', '管理员', 1);
+
+-- 初始化测试用户 (密码: 123456)
+INSERT INTO `user` (`username`, `password`, `nickname`, `phone`, `status`) VALUES
+('test', '$2a$10$EqKcp1WFKVQISheBxmXJGePJwJbvHfEFvEqJjGWQv2Mb6AqPQvWIi', '测试用户', '13800138001', 1);

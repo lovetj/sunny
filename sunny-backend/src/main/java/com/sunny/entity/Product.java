@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @TableName("product")
@@ -22,6 +23,8 @@ public class Product implements Serializable {
     private String image;
 
     private String images;
+
+    private String tags;
 
     private BigDecimal price;
 
@@ -47,4 +50,7 @@ public class Product implements Serializable {
 
     @TableField(exist = false)
     private String categoryName;
+
+    @TableField(exist = false)
+    private List<ProductTag> tagList;
 }

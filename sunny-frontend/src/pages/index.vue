@@ -7,7 +7,16 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="index-scroll" :show-scrollbar="true">
+    <scroll-view
+      scroll-y
+      class="index-scroll"
+      :show-scrollbar="true"
+      :refresher-enabled="true"
+      :refresher-triggered="isRefreshing"
+      refresher-background="#f5f5f5"
+      @refresherrefresh="onRefresherRefresh"
+      @refresherrestore="onRefresherRestore"
+    >
       <view class="index-content">
         <!-- 轮播图模块：支持接口获取、展示正常图片、点击系统内嵌跳转 -->
         <swiper class="banner" indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff" autoplay circular>
@@ -28,7 +37,7 @@
           </swiper-item>
         </swiper>
 
-        <!-- 分类导航 quick-nav：全量分类接口数据，一行最多4个，图标从接口获取 -->
+        <!-- 分类导航 quick-nav：全量分类接口数据，宽度自适应，nav-item 尺寸固定并自适应展示个数 -->
         <view class="quick-nav" v-if="categoryList && categoryList.length > 0">
           <view
             class="nav-item"
@@ -44,7 +53,6 @@
                 mode="aspectFit"
                 @error="handleCategoryIconError(index)"
               ></image>
-              <text v-else class="nav-icon-text">{{ getCategoryEmoji(item) }}</text>
             </view>
             <text class="nav-name">{{ item.name }}</text>
           </view>
@@ -63,6 +71,7 @@
           </view>
           <view
             class="product-scroll-container"
+            v-if="productList && productList.length > 0"
             @mousedown="handleProductMouseDown"
             @touchstart="handleProductTouchStart"
             @touchmove="handleProductTouchMove"
@@ -83,19 +92,24 @@
                   </view>
                   <view class="product-content">
                     <text class="product-name">{{ item.name }}</text>
-                    <text class="product-origin">{{ item.origin || '大山村' }}</text>
+                    <text class="product-desc">{{ item.description || '' }}</text>
                     <view class="product-bottom">
                       <view class="product-price">
                         <text class="price-symbol">¥</text>
                         <text class="price-value">{{ item.price }}</text>
                         <text class="price-unit">/{{ item.unit }}</text>
                       </view>
-                      <view class="add-btn" @click.stop="addToCart(item)">+</view>
+                      <view class="add-btn" @click.stop="addToCart(item)">
+                        <text class="add-btn-icon">+</text>
+                      </view>
                     </view>
                   </view>
                 </view>
               </view>
             </scroll-view>
+          </view>
+          <view class="empty-product-box" v-else>
+            <text class="empty-product-text">暂无热销商品</text>
           </view>
         </view>
 
@@ -110,6 +124,7 @@
 <script>
 import api from '../api/index'
 import { formatImageUrl, setFileBaseServer } from '../utils/request'
+import { checkLogin, updateTabBarCartBadge } from '../utils/auth'
 
 export default {
   data() {
@@ -123,6 +138,7 @@ export default {
       dragStartScrollLeft: 0,
       touchStartX: null,
       hasMovedDrag: false,
+      isRefreshing: false,
       defaultBanner: '/static/images/banner.jpg',
       defaultProduct: '/static/images/product-default.jpg'
     }
@@ -159,6 +175,10 @@ export default {
     }
     // #endif
   },
+  onShow() {
+    this.loadData()
+    updateTabBarCartBadge()
+  },
   onUnload() {
     // #ifdef H5
     if (typeof window !== 'undefined') {
@@ -191,6 +211,19 @@ export default {
     })
   },
   methods: {
+    async onRefresherRefresh() {
+      this.isRefreshing = true
+      try {
+        await this.loadData()
+      } catch (e) {
+        console.error('下拉刷新数据异常', e)
+      } finally {
+        this.isRefreshing = false
+      }
+    },
+    onRefresherRestore() {
+      this.isRefreshing = false
+    },
     async initFileConfig() {
       try {
         const cfg = await api.getFileConfig()
@@ -215,11 +248,12 @@ export default {
         const [banner, category, product] = await Promise.all([
           api.getBannerList().catch(() => []),
           api.getCategoryList().catch(() => []),
-          api.getProductList().catch(() => [])
+          api.getHotsellingList({ status: 1 }).catch(() => [])
         ])
         this.bannerList = Array.isArray(banner) ? banner : []
         this.categoryList = Array.isArray(category) ? category : []
-        this.productList = (Array.isArray(product) ? product : []).slice(0, 10)
+        const hotProducts = (Array.isArray(product) ? product : []).filter(p => p.status === 1)
+        this.productList = hotProducts.slice(0, 10)
         // 商品渲染后再强制一次横向布局，确保内容撑开、触摸可滚动
         this.$nextTick(() => this.enforceProductScrollLayout())
       } catch (e) {
@@ -245,40 +279,7 @@ export default {
         this.$set ? this.$set(this.categoryList[index], 'iconError', true) : (this.categoryList[index].iconError = true)
       }
     },
-    getCategoryColor(code) {
-      const colors = {
-        'ganhuo': 'linear-gradient(135deg, #FF6B6B, #FF8E53)',
-        'shucai': 'linear-gradient(135deg, #4CAF50, #8BC34A)',
-        'shengtaiyou': 'linear-gradient(135deg, #FFC107, #FF9800)',
-        'jiu': 'linear-gradient(135deg, #9C27B0, #E91E63)',
-        'yangzhi': 'linear-gradient(135deg, #2196F3, #03A9F4)'
-      }
-      return colors[code] || 'linear-gradient(135deg, #4CAF50, #8BC34A)'
-    },
-    getCategoryEmoji(item) {
-      if (!item) return '🌾'
-      if (typeof item === 'string') {
-        const emojis = {
-          'ganhuo': '🌶️',
-          'shucai': '🥬',
-          'shengtaiyou': '🫒',
-          'jiu': '🍶',
-          'yangzhi': '🐔'
-        }
-        return emojis[item] || '🌾'
-      }
-      if (item.icon && !this.isImageIcon(item.icon)) {
-        return item.icon
-      }
-      const emojis = {
-        'ganhuo': '🌶️',
-        'shucai': '🥬',
-        'shengtaiyou': '🫒',
-        'jiu': '🍶',
-        'yangzhi': '🐔'
-      }
-      return emojis[item.code] || '🌾'
-    },
+
     handleBannerClick(item) {
       if (!item || !item.link || !item.link.trim()) {
         return
@@ -357,7 +358,7 @@ export default {
       })
     },
     goToCategory(categoryId) {
-      const targetId = categoryId ? Number(categoryId) : 0
+      const targetId = categoryId === 'hotselling' ? 'hotselling' : (categoryId !== undefined && categoryId !== null ? Number(categoryId) : 0)
       uni.setStorageSync('selectedCategoryId', targetId)
       uni.setStorageSync('category_from_home', true)
       uni.switchTab({
@@ -370,7 +371,7 @@ export default {
       })
     },
     goToProductList() {
-      uni.navigateTo({ url: '/pages/product-list' })
+      this.goToCategory('hotselling')
     },
     goToDetail(id) {
       // #ifdef H5
@@ -381,16 +382,19 @@ export default {
       // #endif
       uni.navigateTo({ url: `/pages/product-detail?id=${id}` })
     },
-    addToCart(item) {
-      const cart = uni.getStorageSync('cart') || []
-      const existIndex = cart.findIndex(p => p.id === item.id)
-      if (existIndex > -1) {
-        cart[existIndex].quantity += 1
-      } else {
-        cart.push({ ...item, quantity: 1 })
+    async addToCart(item) {
+      if (!checkLogin()) return
+      if (!item || !item.id) return
+      try {
+        await api.addToCart({
+          productId: item.id,
+          quantity: 1
+        })
+        updateTabBarCartBadge()
+        uni.showToast({ title: '已加入购物车', icon: 'success' })
+      } catch (e) {
+        console.error(e)
       }
-      uni.setStorageSync('cart', cart)
-      uni.showToast({ title: '已加入购物车', icon: 'success' })
     },
     enforceProductScrollLayout() {
       // 用内联样式强制热销区横向布局，不依赖任何 scoped/:deep 选择器和框架内部 class 结构：
@@ -763,21 +767,24 @@ export default {
 }
 
 .quick-nav {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130rpx, 1fr));
+  gap: 20rpx 10rpx;
   background: #fff;
-  padding: 30rpx 10rpx 10rpx;
+  padding: 28rpx 16rpx 16rpx;
   margin: 20rpx;
   border-radius: 20rpx;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  width: auto;
+  max-width: 100%;
 }
 
 .nav-item {
-  width: 25%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 24rpx;
   box-sizing: border-box;
   cursor: pointer;
 }
@@ -824,6 +831,15 @@ export default {
   border-radius: 20rpx;
   padding: 24rpx;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  width: auto;
+  max-width: 100%;
+}
+
+.product-section {
+  width: auto;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .section-header {
@@ -966,11 +982,14 @@ export default {
   white-space: nowrap;
 }
 
-.product-origin {
+.product-desc {
   font-size: 22rpx;
   color: #999;
   display: block;
   margin-top: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-bottom {
@@ -1012,8 +1031,35 @@ export default {
   align-items: center;
   justify-content: center;
   color: #fff;
+  padding: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.add-btn-icon {
   font-size: 32rpx;
+  line-height: 1;
   font-weight: bold;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: -2rpx;
+}
+
+.empty-product-box {
+  width: 100%;
+  padding: 60rpx 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.empty-product-text {
+  font-size: 28rpx;
+  color: #999;
 }
 
 .footer {

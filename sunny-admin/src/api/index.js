@@ -45,6 +45,42 @@ export default {
     return request.post('/category/batch-status', { ids, status })
   },
 
+  getTagList() {
+    return request.get('/tag/list')
+  },
+
+  getTagPage(params) {
+    return request.get('/tag/page', params)
+  },
+
+  getTagDetail(id) {
+    return request.get(`/tag/${id}`)
+  },
+
+  addTag(data) {
+    return request.post('/tag', data)
+  },
+
+  updateTag(data) {
+    return request.put('/tag', data)
+  },
+
+  deleteTag(id) {
+    return request.delete(`/tag/${id}`)
+  },
+
+  batchDeleteTag(ids) {
+    return request.post('/tag/batch-delete', ids)
+  },
+
+  updateTagStatus(id, status) {
+    return request.put(`/tag/${id}/status/${status}`)
+  },
+
+  batchUpdateTagStatus(ids, status) {
+    return request.post('/tag/batch-status', { ids, status })
+  },
+
   getBannerList() {
     return request.get('/banner/list')
   },

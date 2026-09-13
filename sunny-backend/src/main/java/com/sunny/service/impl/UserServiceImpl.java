@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sunny.common.PageResult;
+import com.sunny.dto.LoginDTO;
 import com.sunny.dto.PageDTO;
 import com.sunny.dto.UserDTO;
 import com.sunny.entity.Order;
@@ -13,6 +14,7 @@ import com.sunny.entity.User;
 import com.sunny.mapper.OrderMapper;
 import com.sunny.mapper.UserMapper;
 import com.sunny.service.UserService;
+import com.sunny.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -25,6 +27,51 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Override
+    public String login(LoginDTO dto) {
+        User user = getByUsername(dto.getUsername());
+        if (user == null) {
+            throw new RuntimeException("用户名或密码错误");
+        }
+        if (!BCrypt.checkpw(dto.getPassword(), user.getPassword())) {
+            throw new RuntimeException("用户名或密码错误");
+        }
+        if (user.getStatus() != null && user.getStatus() != 1) {
+            throw new RuntimeException("账号已被禁用");
+        }
+        return jwtUtil.generateToken(user.getId(), user.getUsername());
+    }
+
+    @Override
+    public User getByUsername(String username) {
+        if (!StringUtils.hasText(username)) {
+            return null;
+        }
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getUsername, username.trim());
+        return getOne(wrapper);
+    }
+
+    @Override
+    public void register(LoginDTO dto) {
+        if (!StringUtils.hasText(dto.getUsername()) || !StringUtils.hasText(dto.getPassword())) {
+            throw new RuntimeException("用户名和密码不能为空");
+        }
+        User existUser = getByUsername(dto.getUsername());
+        if (existUser != null) {
+            throw new RuntimeException("用户名已存在");
+        }
+        User user = new User();
+        user.setUsername(dto.getUsername().trim());
+        user.setPassword(BCrypt.hashpw(dto.getPassword().trim()));
+        user.setNickname(dto.getUsername().trim());
+        user.setStatus(1);
+        save(user);
+    }
 
     @Override
     public List<User> listAll() {

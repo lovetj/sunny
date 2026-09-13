@@ -15,13 +15,13 @@ public interface ProductMapper extends BaseMapper<Product> {
     
     @Select("SELECT p.*, c.name as category_name FROM product p " +
             "LEFT JOIN category c ON p.category_id = c.id " +
-            "WHERE p.status = 1 ORDER BY p.sort ASC, p.create_time DESC")
+            "ORDER BY p.status DESC, p.sort ASC, p.create_time DESC")
     List<Product> selectProductsWithCategory();
 
     @Select("SELECT p.*, c.name as category_name FROM product p " +
             "LEFT JOIN category c ON p.category_id = c.id " +
-            "WHERE p.category_id = #{categoryId} AND p.status = 1 " +
-            "ORDER BY p.sort ASC, p.create_time DESC")
+            "WHERE p.category_id = #{categoryId} " +
+            "ORDER BY p.status DESC, p.sort ASC, p.create_time DESC")
     List<Product> selectByCategoryId(@Param("categoryId") Long categoryId);
 
     IPage<Product> selectPageWithCategory(Page<Product> page, @Param("keyword") String keyword, @Param("categoryId") Long categoryId, @Param("status") Integer status);

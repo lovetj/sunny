@@ -35,7 +35,8 @@
     {
       "path": "pages/cart",
       "style": {
-        "navigationBarTitleText": "购物车"
+        "navigationBarTitleText": "购物车",
+        "disableScroll": true
       }
     },
     {
@@ -54,6 +55,12 @@
       "path": "pages/contact",
       "style": {
         "navigationBarTitleText": "联系我们"
+      }
+    },
+    {
+      "path": "pages/login",
+      "style": {
+        "navigationBarTitleText": "用户登录"
       }
     },
     {

@@ -5,13 +5,21 @@ import com.sunny.common.Result;
 import com.sunny.dto.BatchStatusDTO;
 import com.sunny.dto.PageDTO;
 import com.sunny.dto.ProductDTO;
+import com.sunny.entity.Category;
 import com.sunny.entity.Product;
+import com.sunny.entity.ProductTag;
+import com.sunny.service.CategoryService;
 import com.sunny.service.ProductService;
+import com.sunny.service.ProductTagService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/product")
@@ -20,9 +28,20 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private ProductTagService productTagService;
+
+    @Autowired
+    private CategoryService categoryService;
+
     @GetMapping("/list")
     public Result<List<Product>> list() {
         return Result.success(productService.listAll());
+    }
+
+    @GetMapping("/hotselling")
+    public Result<List<Product>> listHotselling(@RequestParam(value = "status", required = false) Integer status) {
+        return Result.success(productService.listHotselling(status));
     }
 
     @GetMapping("/category/{categoryId}")
@@ -37,7 +56,42 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public Result<Product> detail(@PathVariable Long id) {
-        return Result.success(productService.getById(id));
+        Product product = productService.getById(id);
+        if (product != null) {
+            if (!StringUtils.hasText(product.getCategoryName()) && product.getCategoryId() != null) {
+                Category category = categoryService.getById(product.getCategoryId());
+                if (category != null) {
+                    product.setCategoryName(category.getName());
+                }
+            }
+            if (StringUtils.hasText(product.getTags())) {
+                try {
+                    String tagsStr = product.getTags().trim();
+                    List<Long> tagIds = new ArrayList<>();
+                    if (tagsStr.startsWith("[") && tagsStr.endsWith("]")) {
+                        tagsStr = tagsStr.substring(1, tagsStr.length() - 1);
+                    }
+                    for (String part : tagsStr.split(",")) {
+                        String clean = part.trim().replace("\"", "").replace("'", "");
+                        if (StringUtils.hasText(clean)) {
+                            tagIds.add(Long.parseLong(clean));
+                        }
+                    }
+                    if (!tagIds.isEmpty()) {
+                        List<ProductTag> tags = productTagService.listByIds(tagIds);
+                        if (tags != null) {
+                            tags = tags.stream()
+                                    .filter(t -> t.getStatus() == null || t.getStatus() == 1)
+                                    .sorted(Comparator.comparingInt(t -> t.getSort() == null ? 0 : t.getSort()))
+                                    .collect(Collectors.toList());
+                        }
+                        product.setTagList(tags);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        return Result.success(product);
     }
 
     @PostMapping

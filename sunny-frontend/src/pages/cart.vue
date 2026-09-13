@@ -10,7 +10,16 @@
     </view>
     <!-- #endif -->
 
-    <scroll-view scroll-y class="cart-scroll" :show-scrollbar="true">
+    <scroll-view 
+      scroll-y 
+      class="cart-scroll" 
+      :show-scrollbar="true"
+      :refresher-enabled="true"
+      :refresher-triggered="isRefreshing"
+      refresher-background="#f8f8f8"
+      @refresherrefresh="onRefresh"
+      @refresherrestore="onRestore"
+    >
       <view class="cart-list" v-if="isLogin && cartList.length > 0">
         <view class="cart-item" :class="{ 'is-disabled': item.status === 0 }" v-for="(item, index) in cartList" :key="item.id || item.productId || index">
           <view class="item-check" @click="toggleSelect(index)">
@@ -96,6 +105,7 @@ export default {
       cartList: [],
       fromDetail: false,
       loadingOperation: false,
+      isRefreshing: false,
       defaultImage: '/static/images/product-default.jpg'
     }
   },
@@ -151,7 +161,32 @@ export default {
   onUnload() {
     this.updateNavBackButton(false)
   },
+  async onPullDownRefresh() {
+    try {
+      await this.loadCart()
+      updateTabBarCartBadge()
+    } finally {
+      uni.stopPullDownRefresh()
+    }
+  },
   methods: {
+    async onRefresh() {
+      if (this.isRefreshing) return
+      this.isRefreshing = true
+      try {
+        await this.loadCart()
+        updateTabBarCartBadge()
+      } catch (e) {
+        console.error('刷新购物车失败', e)
+      } finally {
+        setTimeout(() => {
+          this.isRefreshing = false
+        }, 300)
+      }
+    },
+    onRestore() {
+      this.isRefreshing = false
+    },
     async initFileConfig() {
       try {
         const cfg = await api.getFileConfig()

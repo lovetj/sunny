@@ -1,78 +1,68 @@
 <template>
   <view class="user-page">
-    <view class="user-header" @click="handleHeaderClick">
-      <image class="avatar" src="/static/images/avatar.png" mode="aspectFill"></image>
-      <text class="nickname">{{ userInfo ? (userInfo.nickname || userInfo.username) : '点击登录/注册' }}</text>
-      <text class="user-tip" v-if="!userInfo">登录后享受更多专属服务</text>
-    </view>
+    <scroll-view scroll-y class="user-scroll" :show-scrollbar="true">
+      <view class="user-header" @click="handleHeaderClick">
+        <image class="avatar" :src="avatarSrc" mode="aspectFill"></image>
+        <text class="nickname">{{ userInfo ? (userInfo.nickname || userInfo.username) : '点击登录/注册' }}</text>
+        <text class="user-tip" v-if="!userInfo">登录后享受更多专属服务</text>
+      </view>
 
-    <view class="menu-section">
-      <view class="menu-item" @click="goToOrder">
-        <text class="menu-icon">📋</text>
-        <text class="menu-text">我的订单</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="menu-item" @click="goToAddress">
-        <text class="menu-icon">📍</text>
-        <text class="menu-text">收货地址</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="menu-item" @click="goToLogistics">
-        <text class="menu-icon">🚚</text>
-        <text class="menu-text">物流信息</text>
-        <text class="menu-arrow">›</text>
-      </view>
-    </view>
-
-    <view class="contact-section">
-      <view class="section-title">联系我们</view>
-      <view class="contact-item" @click="copyWechat">
-        <text class="contact-icon">💬</text>
-        <view class="contact-info">
-          <text class="contact-label">微信号</text>
-          <text class="contact-value">{{ config.wechat }}</text>
+      <view class="menu-section">
+        <view class="menu-item" @click="goToProfile" v-if="userInfo">
+          <text class="menu-icon">👤</text>
+          <text class="menu-text">基本信息</text>
+          <text class="menu-arrow">›</text>
+        </view>
+        <view class="menu-item" @click="goToOrder" v-if="userInfo">
+          <text class="menu-icon">📋</text>
+          <text class="menu-text">我的订单</text>
+          <text class="menu-arrow">›</text>
+        </view>
+        <view class="menu-item" @click="goToAddress" v-if="userInfo">
+          <text class="menu-icon">📍</text>
+          <text class="menu-text">收货地址</text>
+          <text class="menu-arrow">›</text>
+        </view>
+        <view class="menu-item" @click="goToLogistics" v-if="userInfo">
+          <text class="menu-icon">🚚</text>
+          <text class="menu-text">物流信息</text>
+          <text class="menu-arrow">›</text>
+        </view>
+        <view class="menu-item" @click="goToChangePassword" v-if="userInfo">
+          <text class="menu-icon">🔐</text>
+          <text class="menu-text">更改密码</text>
+          <text class="menu-arrow">›</text>
         </view>
       </view>
-      <view class="contact-item" @click="copyDouyin">
-        <text class="contact-icon">🎵</text>
-        <view class="contact-info">
-          <text class="contact-label">抖音号</text>
-          <text class="contact-value">{{ config.douyin }}</text>
-        </view>
-      </view>
-      <view class="contact-item" @click="callPhone">
-        <text class="contact-icon">📞</text>
-        <view class="contact-info">
-          <text class="contact-label">联系电话</text>
-          <text class="contact-value">{{ config.phone }}</text>
-        </view>
-      </view>
-    </view>
 
-    <view class="logout-section" v-if="userInfo">
-      <view class="logout-btn" @click="handleLogout">退出登录</view>
-    </view>
+      <view class="logout-section" v-if="userInfo">
+        <view class="logout-btn" @click="handleLogout">退出登录</view>
+      </view>
+    </scroll-view>
   </view>
 </template>
 
 <script>
 import api from '../api/index'
+import request from '../utils/request'
 import { getUserInfo, clearLoginData, isLoggedIn, updateTabBarCartBadge } from '../utils/auth'
 
 export default {
   data() {
     return {
-      userInfo: null,
-      config: {
-        wechat: '',
-        douyin: '',
-        phone: ''
+      userInfo: null
+    }
+  },
+  computed: {
+    avatarSrc() {
+      if (this.userInfo && this.userInfo.avatar) {
+        return request.formatImageUrl(this.userInfo.avatar)
       }
+      return '/static/images/avatar.png'
     }
   },
   onShow() {
     this.checkUser()
-    this.loadConfig()
     updateTabBarCartBadge()
   },
   methods: {
@@ -113,20 +103,6 @@ export default {
         }
       })
     },
-    async loadConfig() {
-      try {
-        const [wechat, douyin, phone] = await Promise.all([
-          api.getConfig('wechat'),
-          api.getConfig('douyin'),
-          api.getConfig('phone')
-        ])
-        this.config.wechat = wechat || ''
-        this.config.douyin = douyin || ''
-        this.config.phone = phone || ''
-      } catch (e) {
-        console.error(e)
-      }
-    },
     goToOrder() {
       if (!isLoggedIn()) {
         uni.navigateTo({ url: '/pages/login' })
@@ -134,34 +110,21 @@ export default {
       }
       uni.navigateTo({ url: '/pages/order' })
     },
+    goToProfile() {
+      uni.navigateTo({ url: '/pages/user/edit' })
+    },
     goToAddress() {
-      uni.showToast({ title: '功能开发中', icon: 'none' })
+      if (!isLoggedIn()) {
+        uni.navigateTo({ url: '/pages/login' })
+        return
+      }
+      uni.navigateTo({ url: '/pages/address/list' })
     },
     goToLogistics() {
       uni.navigateTo({ url: '/pages/logistics' })
     },
-    copyWechat() {
-      if (!this.config.wechat) return
-      uni.setClipboardData({
-        data: this.config.wechat,
-        success: () => {
-          uni.showToast({ title: '微信号已复制', icon: 'success' })
-        }
-      })
-    },
-    copyDouyin() {
-      if (!this.config.douyin) return
-      uni.setClipboardData({
-        data: this.config.douyin,
-        success: () => {
-          uni.showToast({ title: '抖音号已复制', icon: 'success' })
-        }
-      })
-    },
-    callPhone() {
-      if (this.config.phone) {
-        uni.makePhoneCall({ phoneNumber: this.config.phone })
-      }
+    goToChangePassword() {
+      uni.navigateTo({ url: '/pages/user/password' })
     }
   }
 }
@@ -169,9 +132,22 @@ export default {
 
 <style scoped>
 .user-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 100vw;
   background: #f8f8f8;
-  min-height: 100vh;
-  padding-bottom: 40rpx;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.user-scroll {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .user-header {
@@ -236,55 +212,9 @@ export default {
   color: #ccc;
 }
 
-.contact-section {
-  background: #fff;
-  margin: 20rpx;
-  border-radius: 16rpx;
-  padding: 24rpx;
-}
-
-.section-title {
-  font-size: 30rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 20rpx;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.contact-item:last-child {
-  border-bottom: none;
-}
-
-.contact-icon {
-  font-size: 40rpx;
-  margin-right: 20rpx;
-}
-
-.contact-info {
-  flex: 1;
-}
-
-.contact-label {
-  font-size: 24rpx;
-  color: #999;
-  display: block;
-}
-
-.contact-value {
-  font-size: 28rpx;
-  color: #333;
-  margin-top: 8rpx;
-  display: block;
-}
-
 .logout-section {
   margin: 40rpx 20rpx;
+  padding-bottom: 40rpx;
 }
 
 .logout-btn {
@@ -296,5 +226,66 @@ export default {
   font-size: 30rpx;
   font-weight: 500;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+</style>
+
+<style>
+page,
+uni-page,
+uni-page-body {
+  height: 100% !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow: hidden !important;
+  background: #f8f8f8;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  touch-action: pan-y;
+}
+
+uni-page-wrapper {
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+.user-scroll,
+.user-scroll .uni-scroll-view {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+
+.user-scroll::-webkit-scrollbar,
+.user-scroll .uni-scroll-view::-webkit-scrollbar {
+  display: block !important;
+  width: 5px !important;
+  height: 5px !important;
+  background: transparent !important;
+}
+
+.user-scroll::-webkit-scrollbar-thumb,
+.user-scroll .uni-scroll-view::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18) !important;
+  border-radius: 6px !important;
+}
+
+.user-scroll::-webkit-scrollbar-thumb:hover,
+.user-scroll .uni-scroll-view::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.32) !important;
+}
+
+.user-scroll::-webkit-scrollbar-track,
+.user-scroll .uni-scroll-view::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.user-scroll .uni-scroll-view,
+.user-scroll .uni-scroll-view-wrap,
+.user-scroll .uni-scroll-view-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 </style>

@@ -8,8 +8,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sunny.common.PageResult;
 import com.sunny.dto.PageDTO;
 import com.sunny.dto.ProductDTO;
+import com.sunny.entity.Cart;
 import com.sunny.entity.Product;
 import com.sunny.entity.ProductTag;
+import com.sunny.mapper.CartMapper;
 import com.sunny.mapper.ProductMapper;
 import com.sunny.mapper.ProductTagMapper;
 import com.sunny.service.ProductService;
@@ -28,6 +30,9 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     @Autowired
     private ProductTagMapper productTagMapper;
+
+    @Autowired
+    private CartMapper cartMapper;
 
     @Override
     public List<Product> listAll() {
@@ -127,12 +132,27 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
 
     @Override
     public void deleteProduct(Long id) {
+        if (id == null) {
+            return;
+        }
+        LambdaQueryWrapper<Cart> cartWrapper = new LambdaQueryWrapper<>();
+        cartWrapper.eq(Cart::getProductId, id);
+        Long cartCount = cartMapper.selectCount(cartWrapper);
+        if (cartCount != null && cartCount > 0) {
+            throw new RuntimeException("该商品已被购物车引用，无法删除，只能下架！");
+        }
         removeById(id);
     }
 
     @Override
     public void deleteBatch(List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
+            LambdaQueryWrapper<Cart> cartWrapper = new LambdaQueryWrapper<>();
+            cartWrapper.in(Cart::getProductId, ids);
+            Long cartCount = cartMapper.selectCount(cartWrapper);
+            if (cartCount != null && cartCount > 0) {
+                throw new RuntimeException("所选商品中存在被购物车引用的商品，无法删除，只能下架！");
+            }
             removeByIds(ids);
         }
     }

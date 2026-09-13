@@ -28,11 +28,29 @@
       </view>
     </view>
 
+    <view class="config-section">
+      <view class="section-title">第三方服务配置</view>
+
+      <view class="form-item">
+        <text class="form-label">高德地图 Web 服务 Key (amap_key)</text>
+        <input class="form-input" v-model="config.amap_key" placeholder="请输入高德开放平台申请的 Web 服务 Key" />
+        <view class="save-btn" @click="saveConfig('amap_key')">保存地图Key</view>
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">高德地图数字密钥 (amap_secret)</text>
+        <input class="form-input" v-model="config.amap_secret" placeholder="若高德应用开启了数字签名/安全密钥，请在此填入 Secret Key" />
+        <view class="save-btn" @click="saveConfig('amap_secret')">保存数字密钥</view>
+      </view>
+    </view>
+
     <view class="tips-section">
       <text class="tips-title">提示</text>
       <text class="tips-text">1. 微信号和抖音号将显示在前端首页和联系我们页面</text>
       <text class="tips-text">2. 联系电话可点击直接拨打</text>
-      <text class="tips-text">3. 修改后前端将实时更新</text>
+      <text class="tips-text">3. 高德地图 Web 服务 Key 用于用户端收货地址的地图搜索与定位</text>
+      <text class="tips-text">4. 若高德后台开启了“数字签名”认证或配置了安全密钥，请将 Secret 填入数字密钥中，系统将自动进行签名计算</text>
+      <text class="tips-text">5. 修改后前端将实时更新生效</text>
     </view>
   </view>
 </template>
@@ -47,7 +65,9 @@ export default {
         wechat: '',
         douyin: '',
         phone: '',
-        address: ''
+        address: '',
+        amap_key: '',
+        amap_secret: ''
       }
     }
   },
@@ -57,7 +77,7 @@ export default {
   methods: {
     async loadConfig() {
       try {
-        const keys = ['wechat', 'douyin', 'phone', 'address']
+        const keys = ['wechat', 'douyin', 'phone', 'address', 'amap_key', 'amap_secret']
         for (const key of keys) {
           const value = await api.getConfig(key)
           this.config[key] = value || ''

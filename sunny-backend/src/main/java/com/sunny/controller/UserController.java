@@ -9,6 +9,7 @@ import com.sunny.dto.UserDTO;
 import com.sunny.entity.User;
 import com.sunny.service.UserService;
 import com.sunny.util.JwtUtil;
+import cn.hutool.crypto.digest.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -109,6 +110,63 @@ public class UserController {
     @PostMapping("/batch-delete")
     public Result<Void> batchDeletePost(@RequestBody List<Long> ids) {
         userService.deleteBatch(ids);
+        return Result.success();
+    }
+
+    /**
+     * 更新当前登录用户的基本信息（昵称、头像）
+     */
+    @PutMapping("/profile")
+    public Result<User> updateProfile(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                      @RequestBody Map<String, String> body) {
+        if (authorization == null || !jwtUtil.validateToken(authorization)) {
+            return Result.error(401, "用户未登录");
+        }
+        Long userId = jwtUtil.getUserId(authorization);
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+        if (body.containsKey("nickname")) {
+            user.setNickname(body.get("nickname"));
+        }
+        if (body.containsKey("avatar")) {
+            user.setAvatar(body.get("avatar"));
+        }
+        userService.updateById(user);
+        user.setPassword(null);
+        return Result.success(user);
+    }
+
+    /**
+     * 修改当前登录用户的密码
+     */
+    @PutMapping("/password")
+    public Result<Void> updatePassword(@RequestHeader(value = "Authorization", required = false) String authorization,
+                                       @RequestBody Map<String, String> body) {
+        if (authorization == null || !jwtUtil.validateToken(authorization)) {
+            return Result.error(401, "用户未登录");
+        }
+        Long userId = jwtUtil.getUserId(authorization);
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.error("用户不存在");
+        }
+
+        String password = body.get("password");
+        String confirmPassword = body.get("confirmPassword");
+        if (password == null || password.trim().isEmpty()) {
+            return Result.error("密码不能为空");
+        }
+        if (password.length() < 6) {
+            return Result.error("密码长度不能少于6位");
+        }
+        if (!password.equals(confirmPassword)) {
+            return Result.error("两次输入的密码不一致");
+        }
+
+        user.setPassword(BCrypt.hashpw(password.trim()));
+        userService.updateById(user);
         return Result.success();
     }
 

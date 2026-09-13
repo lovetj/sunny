@@ -194,7 +194,7 @@ export default {
   },
 
   setConfig(key, value) {
-    return request.post('/config', null, { params: { key, value } })
+    return request.post(`/config?key=${encodeURIComponent(key)}&value=${encodeURIComponent(value || '')}`, { key, value })
   },
 
   getFileConfig() {

@@ -14,6 +14,12 @@ export default defineConfig({
       '/sunny_file': {
         target: 'http://localhost:8081',
         changeOrigin: true
+      },
+      // 高德 Web 服务 API 代理 (H5 开发时解决浏览器跨域问题)
+      '/amap': {
+        target: 'https://restapi.amap.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/amap/, '')
       }
     }
   }

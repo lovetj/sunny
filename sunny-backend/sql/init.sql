@@ -208,12 +208,35 @@ INSERT INTO `config` (`config_key`, `config_value`, `description`) VALUES
 ('wechat', 'sunny-farm', '微信号'),
 ('douyin', 'sunny-farm', '抖音号'),
 ('phone', '13800138000', '联系电话'),
-('address', '某省某市某县大山村', '地址');
+('address', '某省某市某县大山村', '地址'),
+('amap_key', '', '高德地图Web服务Key'),
+('amap_secret', '', '高德地图数字密钥(安全密钥/Secret Key)');
 
 -- 初始化管理员账号 (密码: admin123)
 INSERT INTO `admin` (`username`, `password`, `real_name`, `status`) VALUES
-('admin', '$2a$10$EqKcp1WFKVQISheBxmXJGePJwJbvHfEFvEqJjGWQv2Mb6AqPQvWIi', '管理员', 1);
+('admin', '$2a$10$f3o1ECZ6a.VZhezkmhl46uBpGmnPNmLvsRDIdjkJ/a/oNodOZJu0S', '管理员', 1);
 
 -- 初始化测试用户 (密码: 123456)
 INSERT INTO `user` (`username`, `password`, `nickname`, `phone`, `status`) VALUES
-('test', '$2a$10$EqKcp1WFKVQISheBxmXJGePJwJbvHfEFvEqJjGWQv2Mb6AqPQvWIi', '测试用户', '13800138001', 1);
+('test', '$2a$10$f3o1ECZ6a.VZhezkmhl46uBpGmnPNmLvsRDIdjkJ/a/oNodOZJu0S', '测试用户', '13800138001', 1);
+
+-- 用户收货地址表
+CREATE TABLE IF NOT EXISTS `address` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `receiver_name` VARCHAR(20) NOT NULL COMMENT '收货人(不超过20个字)',
+    `phone` VARCHAR(20) NOT NULL COMMENT '手机号码',
+    `detail_address` VARCHAR(255) NOT NULL COMMENT '详细地址(小区/学校/大厦等)',
+    `house_number` VARCHAR(100) DEFAULT '' COMMENT '楼号门牌(例如3号楼102室)',
+    `address_type` VARCHAR(20) DEFAULT '家' COMMENT '地址类型(公司,家,学校)',
+    `province` VARCHAR(50) DEFAULT NULL COMMENT '省份',
+    `city` VARCHAR(50) DEFAULT NULL COMMENT '城市',
+    `district` VARCHAR(50) DEFAULT NULL COMMENT '区/县',
+    `latitude` DECIMAL(10, 6) DEFAULT NULL COMMENT '纬度',
+    `longitude` DECIMAL(10, 6) DEFAULT NULL COMMENT '经度',
+    `is_default` TINYINT DEFAULT 0 COMMENT '是否默认 0否 1是',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户收货地址表';

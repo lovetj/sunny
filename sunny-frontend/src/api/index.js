@@ -50,6 +50,14 @@ export default {
     return request.get('/user/info')
   },
 
+  updateUserProfile(data) {
+    return request.put('/user/profile', data)
+  },
+
+  updateUserPassword(data) {
+    return request.put('/user/password', data)
+  },
+
   // Shopping Cart
   getCartList() {
     return request.get('/cart/list')
@@ -92,6 +100,10 @@ export default {
     return request.get(`/config/${key}`)
   },
 
+  setConfig(key, value) {
+    return request.post(`/config?key=${encodeURIComponent(key)}&value=${encodeURIComponent(value || '')}`, { key, value })
+  },
+
   // Order
   createOrder(data) {
     return request.post('/order/create', data)
@@ -103,5 +115,34 @@ export default {
 
   getOrderDetail(id) {
     return request.get(`/order/${id}`)
+  },
+
+  // Address
+  getAddressList() {
+    return request.get('/address/list')
+  },
+
+  getDefaultAddress() {
+    return request.get('/address/default')
+  },
+
+  getAddressDetail(id) {
+    return request.get(`/address/${id}`)
+  },
+
+  addAddress(data) {
+    return request.post('/address', data)
+  },
+
+  updateAddress(data) {
+    return request.put('/address', data)
+  },
+
+  deleteAddress(id) {
+    return request.delete(`/address/${id}`)
+  },
+
+  setDefaultAddress(id) {
+    return request.post(`/address/default/${id}`)
   }
 }
